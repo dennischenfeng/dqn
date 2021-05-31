@@ -1,12 +1,13 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='dqn',
-    version='0.1',
-    packages=[''],
+    version='0.1.0',
+    packages=find_packages(),
     url='',
-    license='',
-    author='dennis',
+    license='LICENSE',
+    author='Dennis Feng',
     author_email='',
-    description=''
+    description='',
+    install_requires=[]
 )
