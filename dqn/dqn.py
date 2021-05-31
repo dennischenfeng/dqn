@@ -17,7 +17,7 @@ class DQN():
         self.q_target = QNetwork()
         self.replay_memory = ReplayMemory()
 
-    def learn(self, num_steps, epsilon, gamma, minibatch_size, target_update_steps, lr=1e-3):
+    def learn(self, n_steps, epsilon, gamma, minibatch_size, target_update_steps, lr=1e-3):
         """
 
         :param steps:
@@ -26,7 +26,7 @@ class DQN():
         optimizer_q = th.optim.RMSprop(self.q.parameters(), lr=lr)
 
         po = self._preprocess_obs(self.env.reset())
-        for step in range(num_steps):
+        for step in range(n_steps):
             if np.random.random() > epsilon:
                 a = self.predict(po)
             else:
@@ -51,7 +51,7 @@ class DQN():
                 self.q_target = self.q
 
     def predict(self, preprocessed_obs):
-        # TODO might want to mandata first dim is batch_dim
+        # TODO might want to mandate first dim is batch_dim
         # TODO: might need to specify dim arg
         action = th.argmax(self.q(preprocessed_obs))
         return action
@@ -60,6 +60,7 @@ class DQN():
         pass
 
     def _preprocess_obs(self, obs):
+        # TODO: convert to channels first, i.e. CxHxW images
         pass
 
 
@@ -82,8 +83,22 @@ class ReplayMemory():
 
 
 class QNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, n_actions):
         super().__init__()
+        n_input_channels = 4
+        n_flattened_activations = 3136
+        self.cnn = nn.Sequential(
+            nn.Conv2d(n_input_channels, 32, kernel_size=8, stride=4, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(n_flattened_activations, 256),
+            nn.ReLU(),
+            nn.Linear(256, n_actions),
+        )
 
     def forward(self):
         pass
