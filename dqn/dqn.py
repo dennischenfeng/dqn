@@ -38,26 +38,27 @@ class DQN():
         optimizer_q = th.optim.RMSprop(self.q.parameters(), lr=lr)
 
         o = self.env.reset()
-        # Last 4 frames; duplicates earliest if not enough frames in history
+        # Last 4 frames; duplicates earliest b/c not enough frames in history yet
         latest_obs_sequence = [o] * OBS_SEQUENCE_LENGTH
 
         pos = self._preprocess_obs_sequence(latest_obs_sequence)
-        #TODO: continue here to ensure use latest_obs_sequence rather than p_obs
+
         for step in range(n_steps):
             if np.random.random() > epsilon:
-                a = self.predict(po)
+                a = self.predict(pos)
             else:
                 a = self.env.action_space.sample()
             o2, r, d, _ = self.env.step(a)
-            po2 = self._preprocess_obs_sequence(o2)
-            self.replay_memory.store(po, a, r, po2, d)
+            pos2 = self._preprocess_obs_sequence(o2)
+            self.replay_memory.store(pos, a, r, pos2, d)
 
-            po = po2  # for next iteration
+            # for next iteration
+            pos = self.env.reset() if d else pos2
 
             # Use minibatch sampled from replay memory to take grad descent step
-            pom, am, rm, po2m, dm = self.replay_memory.sample(minibatch_size)  # "m" means "minibatch samples"
-            y = rm + dm * gamma * th.max(self.q_target(po2m))  # TODO: ensure batch; also might need specify dim
-            pred = self.predict(pom)
+            posm, am, rm, pos2m, dm = self.replay_memory.sample(minibatch_size)  # "m" means "minibatch samples"
+            y = rm + dm * gamma * th.max(self.q_target(pos2m))  # TODO: ensure batch; also might need specify dim
+            pred = self.predict(posm)
             loss = self._compute_loss(pred, y)
 
             optimizer_q.zero_grad()
@@ -80,8 +81,6 @@ class DQN():
         assert obs.shape == ATARI_OBS_SHAPE
 
 
-
-
 class ReplayMemory():
     """
     Replay memory data buffer for storing past transitions
@@ -89,7 +88,7 @@ class ReplayMemory():
     def __init__(self, n):
         pass
 
-    def store(self, p_obs, action, rew, p_obs2):
+    def store(self, p_obs, action, rew, p_obs2, done):
         pass
 
     def sample(self, batch_size):
