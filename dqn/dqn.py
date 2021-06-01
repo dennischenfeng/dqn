@@ -3,7 +3,10 @@ import gym
 import torch as th
 import torch.nn as nn
 import numpy as np
+from copy import deepcopy
 
+ATARI_OBS_SHAPE = (210, 160, 3)
+OBS_SEQUENCE_LENGTH = 4  # number of frames to keep as "last N frames" to feed as input to Q network
 
 class DQN():
     """
@@ -11,28 +14,42 @@ class DQN():
     (https://arxiv.org/pdf/1312.5602.pdf).
 
     """
-    def __init__(self, env):
+    def __init__(self, env, replay_memory_size):
+        if not isinstance(env.action_space, gym.spaces.discrete.Discrete):
+            raise ValueError("`Environment action space must be `Discrete`; DQN does not support otherwise.")
         self.env = env
-        self.q = QNetwork()
-        self.q_target = QNetwork()
-        self.replay_memory = ReplayMemory()
+        n_actions = self.env.action_space.n
 
-    def learn(self, n_steps, epsilon, gamma, minibatch_size, target_update_steps, lr=1e-3):
+        self.q = QNetwork(n_actions)
+        self.q_target = deepcopy(self.q)
+        self.replay_memory = ReplayMemory(replay_memory_size)
+
+    def learn(
+        self,
+        n_steps,
+        epsilon,
+        gamma,
+        minibatch_size,
+        target_update_steps,
+        lr=1e-3
+    ):
         """
-
-        :param steps:
-        :return:
         """
         optimizer_q = th.optim.RMSprop(self.q.parameters(), lr=lr)
 
-        po = self._preprocess_obs(self.env.reset())
+        o = self.env.reset()
+        # Last 4 frames; duplicates earliest if not enough frames in history
+        latest_obs_sequence = [o] * OBS_SEQUENCE_LENGTH
+
+        pos = self._preprocess_obs_sequence(latest_obs_sequence)
+        #TODO: continue here to ensure use latest_obs_sequence rather than p_obs
         for step in range(n_steps):
             if np.random.random() > epsilon:
                 a = self.predict(po)
             else:
                 a = self.env.action_space.sample()
             o2, r, d, _ = self.env.step(a)
-            po2 = self._preprocess_obs(o2)
+            po2 = self._preprocess_obs_sequence(o2)
             self.replay_memory.store(po, a, r, po2, d)
 
             po = po2  # for next iteration
@@ -48,10 +65,9 @@ class DQN():
             optimizer_q.step()
 
             if step % target_update_steps == 0:
-                self.q_target = self.q
+                self.q_target = deepcopy(self.q)
 
     def predict(self, preprocessed_obs):
-        # TODO might want to mandate first dim is batch_dim
         # TODO: might need to specify dim arg
         action = th.argmax(self.q(preprocessed_obs))
         return action
@@ -59,9 +75,11 @@ class DQN():
     def _compute_loss(self, predictions, targets):
         pass
 
-    def _preprocess_obs(self, obs):
+    def _preprocess_obs_sequence(self, obs):
         # TODO: convert to channels first, i.e. CxHxW images
-        pass
+        assert obs.shape == ATARI_OBS_SHAPE
+
+
 
 
 class ReplayMemory():
@@ -87,7 +105,7 @@ class QNetwork(nn.Module):
         super().__init__()
         n_input_channels = 4
         n_flattened_activations = 3136
-        self.cnn = nn.Sequential(
+        self.net = nn.Sequential(
             nn.Conv2d(n_input_channels, 32, kernel_size=8, stride=4, padding=0),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0),
@@ -100,8 +118,8 @@ class QNetwork(nn.Module):
             nn.Linear(256, n_actions),
         )
 
-    def forward(self):
-        pass
+    def forward(self, preprocessed_obs):
+        return self.net(preprocessed_obs)
 
 
 def annealed_epsilon(step, epsilon_start, epsilon_stop, anneal_finished_step):
