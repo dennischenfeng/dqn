@@ -8,6 +8,7 @@ from copy import deepcopy
 ATARI_OBS_SHAPE = (210, 160, 3)
 OBS_SEQUENCE_LENGTH = 4  # number of frames to keep as "last N frames" to feed as input to Q network
 
+
 class DQN():
     """
     A working implementation that reproduces DQN for Atari, based entirely from the original paper
@@ -19,6 +20,9 @@ class DQN():
             raise ValueError("`Environment action space must be `Discrete`; DQN does not support otherwise.")
         self.env = env
         n_actions = self.env.action_space.n
+
+        # Get p_obs_seq
+        sampled_obs = self.env.observation_space.sample()
 
         self.q = QNetwork(n_actions)
         self.q_target = deepcopy(self.q)
@@ -42,7 +46,7 @@ class DQN():
         latest_obs_sequence = [o] * OBS_SEQUENCE_LENGTH
 
         pos = self._preprocess_obs_sequence(latest_obs_sequence)
-
+        # TODO: note: ensure data is tensor before feeding into any pytorch function/module
         for step in range(n_steps):
             if np.random.random() > epsilon:
                 a = self.predict(pos)
@@ -58,7 +62,8 @@ class DQN():
             # Use minibatch sampled from replay memory to take grad descent step
             posm, am, rm, pos2m, dm = self.replay_memory.sample(minibatch_size)  # "m" means "minibatch samples"
             y = rm + dm * gamma * th.max(self.q_target(pos2m))  # TODO: ensure batch; also might need specify dim
-            pred = self.predict(posm)
+            # TODO: need to use `am` to select actions in q
+            pred = self.q(posm)
             loss = self._compute_loss(pred, y)
 
             optimizer_q.zero_grad()
@@ -74,7 +79,8 @@ class DQN():
         return action
 
     def _compute_loss(self, predictions, targets):
-        pass
+        loss = (predictions - targets) ** 2
+        return loss
 
     def _preprocess_obs_sequence(self, obs):
         # TODO: convert to channels first, i.e. CxHxW images
@@ -85,18 +91,42 @@ class ReplayMemory():
     """
     Replay memory data buffer for storing past transitions
     """
-    def __init__(self, n):
-        pass
+    def __init__(self, n, obs_shape):
+        self.n = n
+        self.o = np.zeros((n, *obs_shape))
+        self.a = np.zeros(n)
+        self.r = np.zeros(n)
+        self.o2 = np.zeros((n, *obs_shape))
+        self.d = np.full(n, False)
+        self.num_stores = 0
 
-    def store(self, p_obs, action, rew, p_obs2, done):
-        pass
+    def store(self, obs, action, rew, obs2, done):
+        i = self.num_stores % self.n
+        self.o[i] = obs
+        self.a[i] = action
+        self.r[i] = rew
+        self.o2[i] = obs2
+        self.d[i] = done
+        self.num_stores += 1
 
-    def sample(self, batch_size):
+    def sample(self, minibatch_size):
         """
         Sample a random minibatch of transitions
         :return:
         """
-        pass
+        active_storage_size = min(self.num_stores, self.n)
+        if minibatch_size > active_storage_size:
+            raise ValueError(f"Not enough samples in replay memory ({active_storage_size}) to sample minibatch_size "
+                             f"({minibatch_size})")
+
+        indices = np.random.choice(range(active_storage_size), minibatch_size, replace=False)
+        o = self.o[indices]
+        a = self.a[indices]
+        r = self.r[indices]
+        o2 = self.o2[indices]
+        d = self.d[indices]
+
+        return o, a, r, o2, d
 
 
 class QNetwork(nn.Module):
