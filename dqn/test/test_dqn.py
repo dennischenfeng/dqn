@@ -4,9 +4,9 @@ import torch as th
 from dqn.dqn import QNetwork, ReplayMemory, annealed_epsilon
 
 
-def generate_p_obs(minibatch_size):
+def create_p_obs(minibatch_size):
     # minibatch size 32, 4 channels, 84 x 84 image
-    return th.zeros((minibatch_size, 4, 84, 84))
+    return np.ones((minibatch_size, 4, 84, 84))
 
 
 def test_annealed_epsilon():
@@ -24,7 +24,8 @@ def test_q_network():
     for n_actions in [5, 10, 15]:
         for minibatch_size in [32, 64, 128]:
             q = QNetwork(n_actions)
-            p_obs = generate_p_obs(minibatch_size)
+            p_obs = create_p_obs(minibatch_size)
+            p_obs = th.tensor(p_obs).float()
             assert q(p_obs).shape == (minibatch_size, n_actions)
 
 
@@ -53,11 +54,11 @@ def test_replay_memory_simple_obs():
     m.store(o, a, r, o2, d)
 
     o_s, a_s, r_s, o2_s, d_s = m.sample(1)
-    assert (o_s == np.expand_dims(np.ones(5), 0)).all()
-    assert (a_s == np.expand_dims(1, 0)).all()
-    assert (r_s == np.expand_dims(100, 0)).all()
-    assert (o2_s == np.expand_dims(2 * np.ones(5), 0)).all()
-    assert (d_s == np.expand_dims(False, 0)).all()
+    assert (o_s[0] == np.ones(5)).all()
+    assert a_s[0] == 1
+    assert r_s[0] == 100
+    assert (o2_s[0] == 2 * np.ones(5)).all()
+    assert not d_s[0]
 
     with pytest.raises(ValueError):
         m.sample(2)
@@ -71,7 +72,6 @@ def test_replay_memory_simple_obs():
     assert 1 in a_s  # Sample 1 is still here
     assert 100 in r_s
 
-    assert m.num_stores == 10
     with pytest.raises(ValueError):
         m.sample(11)
 
@@ -86,4 +86,28 @@ def test_replay_memory_simple_obs():
     with pytest.raises(ValueError):
         m.sample(11)
 
+
+def test_replay_memory_representative_obs():
+    p_obs = create_p_obs(1)[0]
+    action = 2
+    rew = 50
+    p_obs2 = 2 * p_obs
+    done = False
+
+    m = ReplayMemory(10, p_obs.shape)
+    m.store(p_obs, action, rew, p_obs2, done)
+
+    po_s, a_s, r_s, po2_s, d_s = m.sample(1)
+    # import pdb; pdb.set_trace()
+    assert (po_s[0] == p_obs).all()
+    assert a_s[0] == action
+    assert r_s[0] == rew
+    assert (po2_s[0] == p_obs2).all()
+    assert d_s[0] == done
+
+    # assert po_s[0] == np.expand_dims(p_obs, 0)).all()
+    # assert a_s == np.expand_dims(action, 0)).all()
+    # assert r_s == np.expand_dims(rew, 0)).all()
+    # assert po2_s == np.expand_dims(p_obs2, 0)).all()
+    # assert po2_s == np.expand_dims(p_obs2, 0
 
