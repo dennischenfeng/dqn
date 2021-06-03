@@ -1,7 +1,8 @@
 import pytest
 import numpy as np
 import torch as th
-from dqn.dqn import QNetwork, ReplayMemory, annealed_epsilon, SimpleCrop
+import gym
+from dqn.dqn import DQN, QNetwork, ReplayMemory, annealed_epsilon, SimpleCrop
 
 
 def create_p_obs_seq(minibatch_size):
@@ -121,4 +122,11 @@ def test_simple_crop():
     expected = expected.float()
 
     assert (expected == cropped_img).all().item()
+
+
+def test_dqn():
+    env = gym.make("Pong-v0")
+    model = DQN(env, replay_memory_size=1e6)
+
+    model.learn(1, epsilon=0.1, gamma=0.99, minibatch_size=32, target_update_steps=10, lr=1e-3)
 
