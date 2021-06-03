@@ -28,12 +28,6 @@ class DQN():
         self.q = QNetwork(n_actions)
         self.q_target = deepcopy(self.q)
 
-        # Instantiate replay memory, first getting p_obs_seq shape
-        sampled_obs = self.env.observation_space.sample()
-        obs_seq = [sampled_obs] * OBS_SEQUENCE_LENGTH
-        p_obs_seq = self._preprocess_obs_sequence(obs_seq)
-        self.replay_memory = ReplayMemory(replay_memory_size, p_obs_seq.shape)
-
         # Need different image cropping (roughly capturing the playing area of screen) for each env
         game = env.spec.id
         crop_start_row = CROP_START_ROW[game]
@@ -42,6 +36,12 @@ class DQN():
             transforms.Resize((110, 84)),
             SimpleCrop(crop_start_row, 0, 84, 84)
         ])
+
+        # Instantiate replay memory, first getting p_obs_seq shape
+        sampled_obs = self.env.observation_space.sample()
+        obs_seq = [sampled_obs] * OBS_SEQUENCE_LENGTH
+        p_obs_seq = self._preprocess_obs_sequence(obs_seq)
+        self.replay_memory = ReplayMemory(replay_memory_size, p_obs_seq.shape)
 
     def learn(
         self,
@@ -59,16 +59,18 @@ class DQN():
         o = self.env.reset()
         # Last 4 frames; duplicates earliest b/c not enough frames in history yet
         latest_obs_sequence = [o] * OBS_SEQUENCE_LENGTH
-
         pos = self._preprocess_obs_sequence(latest_obs_sequence)
         for step in range(n_steps):
-            # Take step and store in replay memory
+            # Take step and store transition in replay memory
             if np.random.random() > epsilon:
-                a = self.predict(pos)
+                a = self.predict(pos.unsqueeze(0))
             else:
                 a = self.env.action_space.sample()
             o2, r, d, _ = self.env.step(a)
-            pos2 = self._preprocess_obs_sequence(o2)
+
+            latest_obs_sequence.pop(0)
+            latest_obs_sequence.append(o2)
+            pos2 = self._preprocess_obs_sequence(latest_obs_sequence)
             self.replay_memory.store(pos, a, r, pos2, d)
 
             # For next iteration
@@ -109,7 +111,9 @@ class DQN():
 
         p_obs_seq = th.tensor(obs_seq).float()
         p_obs_seq = p_obs_seq.permute(0, 3, 1, 2)
-        p_obs_seq = self.preprocess_transform(p_obs_seq).squeeze(1)
+        p_obs_seq = self.preprocess_transform(p_obs_seq)
+        # Squeeze out grayscale dimension (original RGB dim)
+        p_obs_seq = p_obs_seq.squeeze(1)
         # TODO: remove
         assert tuple(p_obs_seq.shape) == (4, 84, 84)
         return p_obs_seq
@@ -120,6 +124,7 @@ class ReplayMemory():
     Replay memory data buffer for storing past transitions
     """
     def __init__(self, n, obs_shape):
+        n = int(n)
         self.n = n
         self.o = np.zeros((n, *obs_shape))
         self.a = np.zeros(n)
