@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import torch as th
-from dqn.dqn import QNetwork, ReplayMemory, annealed_epsilon
+from dqn.dqn import QNetwork, ReplayMemory, annealed_epsilon, SimpleCrop
 
 
 def create_p_obs_seq(minibatch_size):
@@ -103,4 +103,22 @@ def test_replay_memory_representative_obs():
     assert r_s[0] == rew
     assert (pos2_s[0] == p_obs2).all()
     assert d_s[0] == done
+
+
+def test_simple_crop():
+    img = th.arange(10).float()
+    img = img.repeat(20, 1)
+    img = img.unsqueeze(0)
+
+    c = SimpleCrop(1, 2, 3, 4)
+    cropped_img = c(img)
+
+    expected = th.tensor([[
+        [2, 3, 4, 5],
+        [2, 3, 4, 5],
+        [2, 3, 4, 5]
+    ]])
+    expected = expected.float()
+
+    assert (expected == cropped_img).all().item()
 
