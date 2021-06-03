@@ -37,7 +37,7 @@ class DQN():
         # Need different image cropping (roughly capturing the playing area of screen) for each env
         game = env.spec.id
         crop_start_row = CROP_START_ROW[game]
-        self.preprocessing_transform = transforms.Compose([
+        self.preprocess_transform = transforms.Compose([
             transforms.Grayscale(),
             transforms.Resize((110, 84)),
             SimpleCrop(crop_start_row, 0, 84, 84)
@@ -61,8 +61,8 @@ class DQN():
         latest_obs_sequence = [o] * OBS_SEQUENCE_LENGTH
 
         pos = self._preprocess_obs_sequence(latest_obs_sequence)
-        # TODO: note: ensure data is tensor before feeding into any pytorch function/module
         for step in range(n_steps):
+            # Take step and store in replay memory
             if np.random.random() > epsilon:
                 a = self.predict(pos)
             else:
@@ -71,7 +71,7 @@ class DQN():
             pos2 = self._preprocess_obs_sequence(o2)
             self.replay_memory.store(pos, a, r, pos2, d)
 
-            # for next iteration
+            # For next iteration
             pos = self.env.reset() if d else pos2
 
             # Use minibatch sampled from replay memory to take grad descent step
@@ -103,8 +103,12 @@ class DQN():
         for a in obs_seq:
             assert a.shape == ATARI_OBS_SHAPE
 
-        # TODO: convert to channels first, i.e. CxHxW images
-        # TODO: continue here
+        p_obs_seq = th.tensor(obs_seq).float()
+        p_obs_seq = p_obs_seq.permute(0, 3, 1, 2)
+        p_obs_seq = self.preprocess_transform(p_obs_seq).squeeze(1)
+        # TODO: remove
+        assert tuple(p_obs_seq.shape) == (4, 84, 84)
+        return p_obs_seq
 
 
 class ReplayMemory():
