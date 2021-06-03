@@ -2,6 +2,7 @@
 import gym
 import torch as th
 import torch.nn as nn
+from torchvision.transforms import Resize
 import numpy as np
 from copy import deepcopy
 
@@ -20,13 +21,24 @@ class DQN():
             raise ValueError("`Environment action space must be `Discrete`; DQN does not support otherwise.")
         self.env = env
         n_actions = self.env.action_space.n
-
-        # Get p_obs_seq
-        sampled_obs = self.env.observation_space.sample()
-
         self.q = QNetwork(n_actions)
         self.q_target = deepcopy(self.q)
-        self.replay_memory = ReplayMemory(replay_memory_size)
+
+        # Instantiate replay memory, first getting p_obs_seq shape
+        sampled_obs = self.env.observation_space.sample()
+        obs_seq = [sampled_obs] * OBS_SEQUENCE_LENGTH
+        p_obs_seq = self._preprocess_obs_sequence(obs_seq)
+        self.replay_memory = ReplayMemory(replay_memory_size, p_obs_seq.shape)
+
+        # Need different image cropping (roughly capturing the playing area of screen) for each env
+        game = env.spec.id
+        crop_start_row = None
+        if game == "Pong-v0":
+            crop_start_row = 18
+        else:
+            raise ValueError("Game must be an Atari env that has a corresponding pre-processing transform implemented "
+                             "in DQN.")
+        self.preprocessing_transform = None
 
     def learn(
         self,
@@ -35,8 +47,7 @@ class DQN():
         gamma,
         minibatch_size,
         target_update_steps,
-        lr=1e-3
-    ):
+        lr=1e-3):
         """
         """
         optimizer_q = th.optim.RMSprop(self.q.parameters(), lr=lr)
@@ -78,13 +89,18 @@ class DQN():
         action = th.argmax(self.q(preprocessed_obs))
         return action
 
-    def _compute_loss(self, predictions, targets):
+    @staticmethod
+    def _compute_loss(predictions, targets):
         loss = (predictions - targets) ** 2
         return loss
 
-    def _preprocess_obs_sequence(self, obs):
+    def _preprocess_obs_sequence(self, obs_seq):
+        assert len(obs_seq) == OBS_SEQUENCE_LENGTH
+        for a in obs_seq:
+            assert a.shape == ATARI_OBS_SHAPE
+
         # TODO: convert to channels first, i.e. CxHxW images
-        assert obs.shape == ATARI_OBS_SHAPE
+        # TODO: continue here
 
 
 class ReplayMemory():
