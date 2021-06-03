@@ -76,10 +76,14 @@ class DQN():
 
             # Use minibatch sampled from replay memory to take grad descent step
             posm, am, rm, pos2m, dm = self.replay_memory.sample(minibatch_size)  # "m" means "minibatch samples"
-            y = rm + dm * gamma * th.max(self.q_target(pos2m))  # TODO: ensure batch; also might need specify dim
-            # TODO: need to use `am` to select actions in q
-            pred = self.q(posm)
-            loss = self._compute_loss(pred, y)
+            ym = rm + dm * gamma * th.max(self.q_target(pos2m), dim=1)
+            # TODO: remove
+            assert tuple(ym.shape) == (minibatch_size,)
+            assert tuple(am.shape) == (minibatch_size,)
+            # Obtain Q values by selecting actions (am) individually for each row of the minibatch
+            predm = self.q(posm)[range(minibatch_size), am]
+            assert tuple(predm.shape) == (minibatch_size,) # TODO: remove
+            loss = self._compute_loss(predm, ym)
 
             optimizer_q.zero_grad()
             loss.backward()
