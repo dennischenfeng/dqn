@@ -1,13 +1,17 @@
 
 import gym
-import torch as th
-import torch.nn as nn
-from torchvision.transforms import Resize
 import numpy as np
 from copy import deepcopy
 
+import torch as th
+import torch.nn as nn
+from torchvision import transforms
+
+
 ATARI_OBS_SHAPE = (210, 160, 3)
 OBS_SEQUENCE_LENGTH = 4  # number of frames to keep as "last N frames" to feed as input to Q network
+# Need different image cropping (roughly capturing the playing area of screen) for each env; starting row for crop
+CROP_START_ROW = {"Pong-v0": 18}
 
 
 class DQN():
@@ -32,13 +36,12 @@ class DQN():
 
         # Need different image cropping (roughly capturing the playing area of screen) for each env
         game = env.spec.id
-        crop_start_row = None
-        if game == "Pong-v0":
-            crop_start_row = 18
-        else:
-            raise ValueError("Game must be an Atari env that has a corresponding pre-processing transform implemented "
-                             "in DQN.")
-        self.preprocessing_transform = None
+        crop_start_row = CROP_START_ROW[game]
+        self.preprocessing_transform = transforms.Compose([
+            transforms.Grayscale(),
+            transforms.Resize((110, 84)),
+            SimpleCrop(crop_start_row, 0, 84, 84)
+        ])
 
     def learn(
         self,
@@ -47,7 +50,8 @@ class DQN():
         gamma,
         minibatch_size,
         target_update_steps,
-        lr=1e-3):
+        lr=1e-3
+    ):
         """
         """
         optimizer_q = th.optim.RMSprop(self.q.parameters(), lr=lr)
@@ -165,6 +169,22 @@ class QNetwork(nn.Module):
 
     def forward(self, preprocessed_obs):
         return self.net(preprocessed_obs)
+
+
+class SimpleCrop(th.nn.Module):
+    """
+    Crops an image (deterministically) using the TF.crop function. (No simple crop can be found in the
+    torchvision.transforms library
+    """
+    def __init__(self, i, j, h, w):
+        super().__init__()
+        self.i = i
+        self.j = j
+        self.h = h
+        self.w = w
+
+    def forward(self, img):
+        return transforms.functional.crop(img, self.i, self.j, self.h, self.w)
 
 
 def annealed_epsilon(step, epsilon_start, epsilon_stop, anneal_finished_step):
