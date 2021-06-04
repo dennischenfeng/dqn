@@ -50,6 +50,7 @@ class DQN():
         gamma,
         minibatch_size,
         target_update_steps,
+        initial_non_update_steps,
         lr=1e-3
     ):
         """
@@ -76,20 +77,21 @@ class DQN():
             # For next iteration
             pos = self.env.reset() if d else pos2
 
-            # Use minibatch sampled from replay memory to take grad descent step
-            posm, am, rm, pos2m, dm = self.replay_memory.sample(minibatch_size)  # "m" means "minibatch samples"
-            ym = rm + dm * gamma * th.max(self.q_target(pos2m), dim=1)
-            # TODO: remove
-            assert tuple(ym.shape) == (minibatch_size,)
-            assert tuple(am.shape) == (minibatch_size,)
-            # Obtain Q values by selecting actions (am) individually for each row of the minibatch
-            predm = self.q(posm)[range(minibatch_size), am]
-            assert tuple(predm.shape) == (minibatch_size,) # TODO: remove
-            loss = self._compute_loss(predm, ym)
+            # Use minibatch sampled from replay memory to take grad descent step (after completed initial steps)
+            if step >= initial_non_update_steps:
+                posm, am, rm, pos2m, dm = self.replay_memory.sample(minibatch_size)  # "m" means "minibatch samples"
+                ym = rm + dm * gamma * th.max(self.q_target(pos2m), dim=1)
+                # TODO: remove
+                assert tuple(ym.shape) == (minibatch_size,)
+                assert tuple(am.shape) == (minibatch_size,)
+                # Obtain Q values by selecting actions (am) individually for each row of the minibatch
+                predm = self.q(posm)[range(minibatch_size), am]
+                assert tuple(predm.shape) == (minibatch_size,) # TODO: remove
+                loss = self._compute_loss(predm, ym)
 
-            optimizer_q.zero_grad()
-            loss.backward()
-            optimizer_q.step()
+                optimizer_q.zero_grad()
+                loss.backward()
+                optimizer_q.step()
 
             if step % target_update_steps == 0:
                 self.q_target = deepcopy(self.q)
