@@ -80,7 +80,10 @@ class DQN():
             # Use minibatch sampled from replay memory to take grad descent step (after completed initial steps)
             if step >= initial_non_update_steps:
                 posm, am, rm, pos2m, dm = self.replay_memory.sample(minibatch_size)  # "m" means "minibatch samples"
-                ym = rm + dm * gamma * th.max(self.q_target(pos2m), dim=1)
+                posm, rm, pos2m, dm = list(map(lambda x: th.tensor(x).float(), [posm, rm, pos2m, dm]))
+                am = th.tensor(am).long()
+
+                ym = rm + dm * th.tensor(gamma) * th.max(self.q_target(pos2m), dim=1).values
                 # TODO: remove
                 assert tuple(ym.shape) == (minibatch_size,)
                 assert tuple(am.shape) == (minibatch_size,)
@@ -103,7 +106,7 @@ class DQN():
 
     @staticmethod
     def _compute_loss(predictions, targets):
-        loss = (predictions - targets) ** 2
+        loss = th.mean((predictions - targets) ** 2)
         return loss
 
     def _preprocess_obs_sequence(self, obs_seq):
