@@ -124,9 +124,29 @@ def test_simple_crop():
     assert (expected == cropped_img).all().item()
 
 
+def test_dqn_compute_loss():
+    targets = th.tensor([
+        [1.0],
+        [2.0],
+        [3.0]
+    ])
+
+    preds = th.tensor([
+        [1.1],
+        [3.0],
+        [13.0]
+    ])
+
+    assert DQN.compute_loss(preds, targets) == pytest.approx(3.67)
+
+
 def test_dqn():
     env = gym.make("Pong-v0")
     model = DQN(env, replay_memory_size=1e6)
 
-    model.learn(1, epsilon=0.1, gamma=0.99, minibatch_size=32, target_update_steps=10, lr=1e-3)
+    model.learn(
+        34, epsilon=0.1, gamma=0.99, batch_size=32, target_update_steps=10, lr=1e-3, initial_non_update_steps=32
+    )
+
+
 
