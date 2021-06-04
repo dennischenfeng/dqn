@@ -16,8 +16,7 @@ CROP_START_ROW = {"Pong-v0": 18}
 
 class DQN():
     """
-    A working implementation that reproduces DQN for Atari, based entirely from the original paper
-    (https://arxiv.org/pdf/1312.5602.pdf).
+    A working implementation that reproduces DQN for Atari, based entirely from the original Nature paper
 
     """
     def __init__(self, env, replay_memory_size):
@@ -39,8 +38,9 @@ class DQN():
 
         # Instantiate replay memory, first getting p_obs_seq shape
         sampled_obs = self.env.observation_space.sample()
+        # TODO: might want to take max of pixel color value with previous frame (to eliminate flickering issue)
         obs_seq = [sampled_obs] * OBS_SEQUENCE_LENGTH
-        p_obs_seq = self._preprocess_obs_sequence(obs_seq)
+        p_obs_seq = self.preprocess_obs_sequence(obs_seq)
         self.replay_memory = ReplayMemory(replay_memory_size, p_obs_seq.shape)
 
     def learn(
@@ -60,7 +60,7 @@ class DQN():
         o = self.env.reset()
         # Last 4 frames; duplicates earliest b/c not enough frames in history yet
         latest_obs_sequence = [o] * OBS_SEQUENCE_LENGTH
-        pos = self._preprocess_obs_sequence(latest_obs_sequence)
+        pos = self.preprocess_obs_sequence(latest_obs_sequence)
         for step in range(n_steps):
             # Take step and store transition in replay memory
             if np.random.random() > epsilon:
@@ -68,10 +68,11 @@ class DQN():
             else:
                 a = self.env.action_space.sample()
             o2, r, d, _ = self.env.step(a)
+            # TODO: might want to clip rewards from -1 to +1, as in the paper
 
             latest_obs_sequence.pop(0)
             latest_obs_sequence.append(o2)
-            pos2 = self._preprocess_obs_sequence(latest_obs_sequence)
+            pos2 = self.preprocess_obs_sequence(latest_obs_sequence)
             self.replay_memory.store(pos, a, r, pos2, d)
 
             # For next iteration
@@ -88,9 +89,9 @@ class DQN():
                 assert tuple(yb.shape) == (batch_size,)
                 assert tuple(ab.shape) == (batch_size,)
                 # Obtain Q values by selecting actions (am) individually for each row of the minibatch
-                predb = self.q(posb)[range(batch_size), ab]
+                predb = self.q(posb)[th.arange(batch_size), ab]
                 assert tuple(predb.shape) == (batch_size,)  # TODO: remove
-                loss = self._compute_loss(predb, yb)
+                loss = self.compute_loss(predb, yb)
 
                 optimizer_q.zero_grad()
                 loss.backward()
@@ -104,11 +105,20 @@ class DQN():
         return action
 
     @staticmethod
-    def _compute_loss(predictions, targets):
-        loss = th.mean((predictions - targets) ** 2)
+    def compute_loss(predictions, targets):
+        """
+        Loss function for optimizing Q. As discussed in the paper, clip the squared error's derivative at -1 and +1,
+        i.e. loss = error^2 if |error| < 1 else |error|
+
+        :param predictions:
+        :param targets:
+        :return:
+        """
+        error = th.abs(predictions - targets)
+        loss = th.mean(th.where(error < 1, error ** 2, error))
         return loss
 
-    def _preprocess_obs_sequence(self, obs_seq):
+    def preprocess_obs_sequence(self, obs_seq):
         assert len(obs_seq) == OBS_SEQUENCE_LENGTH
         for a in obs_seq:
             assert a.shape == ATARI_OBS_SHAPE
@@ -179,9 +189,9 @@ class QNetwork(nn.Module):
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(n_flattened_activations, 256),
+            nn.Linear(n_flattened_activations, 512),
             nn.ReLU(),
-            nn.Linear(256, n_actions),
+            nn.Linear(512, n_actions),
         )
 
     def forward(self, preprocessed_obs):
