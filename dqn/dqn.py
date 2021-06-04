@@ -48,7 +48,7 @@ class DQN():
         n_steps,
         epsilon,
         gamma,
-        minibatch_size,
+        batch_size,
         target_update_steps,
         initial_non_update_steps,
         lr=1e-3
@@ -64,7 +64,7 @@ class DQN():
         for step in range(n_steps):
             # Take step and store transition in replay memory
             if np.random.random() > epsilon:
-                a = self.predict(pos.unsqueeze(0))
+                a = self.predict(pos.unsqueeze(0)).item()
             else:
                 a = self.env.action_space.sample()
             o2, r, d, _ = self.env.step(a)
@@ -79,18 +79,18 @@ class DQN():
 
             # Use minibatch sampled from replay memory to take grad descent step (after completed initial steps)
             if step >= initial_non_update_steps:
-                posm, am, rm, pos2m, dm = self.replay_memory.sample(minibatch_size)  # "m" means "minibatch samples"
-                posm, rm, pos2m, dm = list(map(lambda x: th.tensor(x).float(), [posm, rm, pos2m, dm]))
-                am = th.tensor(am).long()
+                posb, ab, rb, pos2b, db = self.replay_memory.sample(batch_size)  # `b` means "batch"
+                posb, rb, pos2b, db = list(map(lambda x: th.tensor(x).float(), [posb, rb, pos2b, db]))
+                ab = th.tensor(ab).long()
 
-                ym = rm + dm * th.tensor(gamma) * th.max(self.q_target(pos2m), dim=1).values
+                yb = rb + db * th.tensor(gamma) * th.max(self.q_target(pos2b), dim=1).values
                 # TODO: remove
-                assert tuple(ym.shape) == (minibatch_size,)
-                assert tuple(am.shape) == (minibatch_size,)
+                assert tuple(yb.shape) == (batch_size,)
+                assert tuple(ab.shape) == (batch_size,)
                 # Obtain Q values by selecting actions (am) individually for each row of the minibatch
-                predm = self.q(posm)[range(minibatch_size), am]
-                assert tuple(predm.shape) == (minibatch_size,) # TODO: remove
-                loss = self._compute_loss(predm, ym)
+                predb = self.q(posb)[range(batch_size), ab]
+                assert tuple(predb.shape) == (batch_size,)  # TODO: remove
+                loss = self._compute_loss(predb, yb)
 
                 optimizer_q.zero_grad()
                 loss.backward()
@@ -99,9 +99,8 @@ class DQN():
             if step % target_update_steps == 0:
                 self.q_target = deepcopy(self.q)
 
-    def predict(self, preprocessed_obs):
-        # TODO: might need to specify dim arg
-        action = th.argmax(self.q(preprocessed_obs))
+    def predict(self, p_obs_seq_batched):
+        action = th.argmax(self.q(p_obs_seq_batched), dim=1)
         return action
 
     @staticmethod
