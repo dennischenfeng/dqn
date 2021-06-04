@@ -68,7 +68,9 @@ class DQN():
             else:
                 a = self.env.action_space.sample()
             o2, r, d, _ = self.env.step(a)
-            # TODO: might want to clip rewards from -1 to +1, as in the paper
+            # As discussed in the paper, clip rewards at -1 and +1 to limit scale of errors (potentially better
+            # training stability), but reduces ability to differentiate actions for large/small rewards
+            r = float(np.clip(r, -1, 1))
 
             latest_obs_sequence.pop(0)
             latest_obs_sequence.append(o2)
