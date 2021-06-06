@@ -37,17 +37,13 @@ class DQN():
             SimpleCrop(crop_start_row, 0, 84, 84)  # TODO: confirm that Nature paper crops differently for each game
         ])
 
-        # TODO: once we have mod_env_step, rewrite the following few lines
-        # Instantiate replay memory, first getting p_obs_seq shape
-        sampled_obs = self.env.observation_space.sample()
-        # TODO: want to take max of pixel color value with previous frame (to eliminate flickering issue)
-        obs_seq = [sampled_obs] * OBS_MAXED_SEQUENCE_LENGTH
-        p_obs_seq = self.preprocess_obs_maxed_seq(obs_seq)
-        self.replay_memory = ReplayMemory(replay_memory_size, p_obs_seq.shape)
-
-        # Instance variable for learn
+        # Instance variables for tracking state while stepping through env
         self.prev_obs = None
         self.latest_obs_maxed_seq = []
+
+        # Instantiate replay memory with mod_obs shape
+        mod_obs = self.mod_env_reset()
+        self.replay_memory = ReplayMemory(replay_memory_size, mod_obs.shape)
 
     def learn(
         self,
@@ -63,41 +59,32 @@ class DQN():
         """
         optimizer_q = th.optim.RMSprop(self.q.parameters(), lr=lr)
 
-        o = self.env.reset()
-        # Last 4 frames; duplicates earliest b/c not enough frames in history yet
-        latest_obs_sequence = [o] * OBS_MAXED_SEQUENCE_LENGTH
-        pos = self.preprocess_obs_maxed_seq(latest_obs_sequence)
+        mod_obs = self.mod_env_reset()
         for step in range(n_steps):
             # Take step and store transition in replay memory
             if np.random.random() > epsilon:
-                a = self.predict(pos.unsqueeze(0)).item()
+                a = self.predict(mod_obs.unsqueeze(0)).item()
             else:
                 a = self.env.action_space.sample()
-            o2, r, d, _ = self.env.step(a)
-            # As discussed in the paper, clip rewards at -1 and +1 to limit scale of errors (potentially better
-            # training stability), but reduces ability to differentiate actions for large/small rewards
-            r = float(np.clip(r, -1, 1))
+            mod_obs2, r, d, _ = self.mod_env_step(a)
 
-            latest_obs_sequence.pop(0)
-            latest_obs_sequence.append(o2)
-            pos2 = self.preprocess_obs_maxed_seq(latest_obs_sequence)
-            self.replay_memory.store(pos, a, r, pos2, d)
+            self.replay_memory.store(mod_obs, a, r, mod_obs2, d)
 
             # For next iteration
-            pos = self.env.reset() if d else pos2
+            mod_obs = self.mod_env_reset() if d else mod_obs2
 
             # Use minibatch sampled from replay memory to take grad descent step (after completed initial steps)
             if step >= initial_non_update_steps:
-                posb, ab, rb, pos2b, db = self.replay_memory.sample(batch_size)  # `b` means "batch"
-                posb, rb, pos2b, db = list(map(lambda x: th.tensor(x).float(), [posb, rb, pos2b, db]))
+                mod_obsb, ab, rb, mod_obs2b, db = self.replay_memory.sample(batch_size)  # `b` means "batch"
+                mod_obsb, rb, mod_obs2b, db = list(map(lambda x: th.tensor(x).float(), [mod_obsb, rb, mod_obs2b, db]))
                 ab = th.tensor(ab).long()
 
-                yb = rb + db * th.tensor(gamma) * th.max(self.q_target(pos2b), dim=1).values
+                yb = rb + db * th.tensor(gamma) * th.max(self.q_target(mod_obs2b), dim=1).values
                 # TODO: remove
                 assert tuple(yb.shape) == (batch_size,)
                 assert tuple(ab.shape) == (batch_size,)
                 # Obtain Q values by selecting actions (am) individually for each row of the minibatch
-                predb = self.q(posb)[th.arange(batch_size), ab]
+                predb = self.q(mod_obsb)[th.arange(batch_size), ab]
                 assert tuple(predb.shape) == (batch_size,)  # TODO: remove
                 loss = self.compute_loss(predb, yb)
 
@@ -121,7 +108,8 @@ class DQN():
         # For next iteration
         self.prev_obs = obs
 
-        return self.preprocess_obs_maxed_seq()
+        mod_obs = self.preprocess_obs_maxed_seq()
+        return mod_obs
 
     def mod_env_step(self, action):
         """
@@ -171,19 +159,19 @@ class DQN():
         loss = th.mean(th.where(error < 1, error ** 2, error))
         return loss
 
-    def preprocess_obs_maxed_seq(self, obs_seq):
-        assert len(obs_seq) == OBS_MAXED_SEQUENCE_LENGTH
-        for a in obs_seq:
+    def preprocess_obs_maxed_seq(self):
+        assert len(self.latest_obs_maxed_seq) == OBS_MAXED_SEQUENCE_LENGTH
+        for a in self.latest_obs_maxed_seq:
             assert a.shape == ATARI_OBS_SHAPE
 
-        p_obs_seq = th.tensor(obs_seq).float()
-        p_obs_seq = p_obs_seq.permute(0, 3, 1, 2)
-        p_obs_seq = self.preprocess_transform(p_obs_seq)
+        result = th.tensor(self.latest_obs_maxed_seq).float()
+        result = result.permute(0, 3, 1, 2)
+        result = self.preprocess_transform(result)
         # Squeeze out grayscale dimension (original RGB dim)
-        p_obs_seq = p_obs_seq.squeeze(1)
+        result = result.squeeze(1)
         # TODO: remove
-        assert tuple(p_obs_seq.shape) == (4, 84, 84)
-        return p_obs_seq
+        assert tuple(result.shape) == (4, 84, 84)
+        return result
 
 
 class ReplayMemory():
@@ -247,8 +235,8 @@ class QNetwork(nn.Module):
             nn.Linear(512, n_actions),
         )
 
-    def forward(self, preprocessed_obs):
-        return self.net(preprocessed_obs)
+    def forward(self, x):
+        return self.net(x)
 
 
 class SimpleCrop(th.nn.Module):
