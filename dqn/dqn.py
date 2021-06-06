@@ -9,9 +9,9 @@ from torchvision import transforms
 
 
 ATARI_OBS_SHAPE = (210, 160, 3)
-OBS_SEQUENCE_LENGTH = 4  # number of frames to keep as "last N frames" to feed as input to Q network
+OBS_MAXED_SEQUENCE_LENGTH = 4  # number of obs_maxed's to keep as "last N frames" to feed as input to Q network
 # Need different image cropping (roughly capturing the playing area of screen) for each env; starting row for crop
-CROP_START_ROW = {"Pong-v0": 18}
+CROP_START_ROW = {"PongNoFrameskip-v4": 18}
 
 
 class DQN():
@@ -19,10 +19,11 @@ class DQN():
     A working implementation that reproduces DQN for Atari, based entirely from the original Nature paper
 
     """
-    def __init__(self, env, replay_memory_size):
+    def __init__(self, env, replay_memory_size, action_repeat=4):
         if not isinstance(env.action_space, gym.spaces.discrete.Discrete):
             raise ValueError("`Environment action space must be `Discrete`; DQN does not support otherwise.")
         self.env = env
+        self.action_repeat = action_repeat
         n_actions = self.env.action_space.n
         self.q = QNetwork(n_actions)
         self.q_target = deepcopy(self.q)
@@ -33,15 +34,20 @@ class DQN():
         self.preprocess_transform = transforms.Compose([
             transforms.Grayscale(),
             transforms.Resize((110, 84)),
-            SimpleCrop(crop_start_row, 0, 84, 84)
+            SimpleCrop(crop_start_row, 0, 84, 84)  # TODO: confirm that Nature paper crops differently for each game
         ])
 
+        # TODO: once we have mod_env_step, rewrite the following few lines
         # Instantiate replay memory, first getting p_obs_seq shape
         sampled_obs = self.env.observation_space.sample()
-        # TODO: might want to take max of pixel color value with previous frame (to eliminate flickering issue)
-        obs_seq = [sampled_obs] * OBS_SEQUENCE_LENGTH
-        p_obs_seq = self.preprocess_obs_sequence(obs_seq)
+        # TODO: want to take max of pixel color value with previous frame (to eliminate flickering issue)
+        obs_seq = [sampled_obs] * OBS_MAXED_SEQUENCE_LENGTH
+        p_obs_seq = self.preprocess_obs_maxed_seq(obs_seq)
         self.replay_memory = ReplayMemory(replay_memory_size, p_obs_seq.shape)
+
+        # Instance variable for learn
+        self.prev_obs = None
+        self.latest_obs_maxed_seq = []
 
     def learn(
         self,
@@ -59,8 +65,8 @@ class DQN():
 
         o = self.env.reset()
         # Last 4 frames; duplicates earliest b/c not enough frames in history yet
-        latest_obs_sequence = [o] * OBS_SEQUENCE_LENGTH
-        pos = self.preprocess_obs_sequence(latest_obs_sequence)
+        latest_obs_sequence = [o] * OBS_MAXED_SEQUENCE_LENGTH
+        pos = self.preprocess_obs_maxed_seq(latest_obs_sequence)
         for step in range(n_steps):
             # Take step and store transition in replay memory
             if np.random.random() > epsilon:
@@ -74,7 +80,7 @@ class DQN():
 
             latest_obs_sequence.pop(0)
             latest_obs_sequence.append(o2)
-            pos2 = self.preprocess_obs_sequence(latest_obs_sequence)
+            pos2 = self.preprocess_obs_maxed_seq(latest_obs_sequence)
             self.replay_memory.store(pos, a, r, pos2, d)
 
             # For next iteration
@@ -102,6 +108,51 @@ class DQN():
             if step % target_update_steps == 0:
                 self.q_target = deepcopy(self.q)
 
+    def mod_env_reset(self):
+        """
+
+        :return:
+        """
+        obs = self.env.reset()
+        # For first obs, maxing over current & "previous" is meaningless; use obs itself
+        obs_maxed = obs
+        self.latest_obs_maxed_seq = [obs_maxed] * OBS_MAXED_SEQUENCE_LENGTH
+
+        # For next iteration
+        self.prev_obs = obs
+
+        return self.preprocess_obs_maxed_seq()
+
+    def mod_env_step(self, action):
+        """
+
+        :return:
+        """
+
+        obs_maxed = None
+        total_rew = 0
+        done = None
+        info = None
+        assert self.action_repeat >= 1
+        for i in range(self.action_repeat):
+            obs2, rew, done, info = self.env.step(action)
+
+            obs_maxed = np.maximum(self.prev_obs, obs2)
+            # As discussed in the paper, clip step rewards at -1 and +1 to limit scale of errors (potentially better
+            # training stability), but reduces ability to differentiate actions for large/small rewards
+            total_rew += float(np.clip(rew, -1, 1))
+            if done:
+                break
+
+            # For next iteration
+            self.prev_obs = obs2
+
+        self.latest_obs_maxed_seq.pop(0)
+        self.latest_obs_maxed_seq.append(obs_maxed)
+        mod_obs = self.preprocess_obs_maxed_seq()
+
+        return mod_obs, total_rew, done, info
+
     def predict(self, p_obs_seq_batched):
         action = th.argmax(self.q(p_obs_seq_batched), dim=1)
         return action
@@ -120,8 +171,8 @@ class DQN():
         loss = th.mean(th.where(error < 1, error ** 2, error))
         return loss
 
-    def preprocess_obs_sequence(self, obs_seq):
-        assert len(obs_seq) == OBS_SEQUENCE_LENGTH
+    def preprocess_obs_maxed_seq(self, obs_seq):
+        assert len(obs_seq) == OBS_MAXED_SEQUENCE_LENGTH
         for a in obs_seq:
             assert a.shape == ATARI_OBS_SHAPE
 
