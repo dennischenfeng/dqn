@@ -141,7 +141,7 @@ def test_dqn_compute_loss():
 
 
 def test_dqn():
-    env = gym.make("Pong-v0")
+    env = gym.make("PongNoFrameskip-v4")
     model = DQN(env, replay_memory_size=1e6)
 
     model.learn(
