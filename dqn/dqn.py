@@ -19,7 +19,7 @@ class DQN():
     A working implementation that reproduces DQN for Atari, based entirely from the original Nature paper
 
     """
-    def __init__(self, env, replay_memory_size, action_repeat=4):
+    def __init__(self, env, replay_memory_size=1e6, action_repeat=4):
         if not isinstance(env.action_space, gym.spaces.discrete.Discrete):
             raise ValueError("`Environment action space must be `Discrete`; DQN does not support otherwise.")
         self.env = env
