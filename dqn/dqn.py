@@ -7,6 +7,8 @@ import torch as th
 import torch.nn as nn
 from torchvision import transforms
 
+from dqn.replay_memory import ReplayMemory
+from dqn.utils import SimpleCrop, annealed_epsilon
 
 ATARI_OBS_SHAPE = (210, 160, 3)
 OBS_MAXED_SEQUENCE_LENGTH = 4  # number of obs_maxed's to keep as "last N frames" to feed as input to Q network
@@ -174,49 +176,6 @@ class DQN():
         return result
 
 
-class ReplayMemory():
-    """
-    Replay memory data buffer for storing past transitions
-    """
-    def __init__(self, n, obs_shape):
-        n = int(n)
-        self.n = n
-        self.o = np.zeros((n, *obs_shape))
-        self.a = np.zeros(n)
-        self.r = np.zeros(n)
-        self.o2 = np.zeros((n, *obs_shape))
-        self.d = np.full(n, False)
-        self.num_stores = 0
-
-    def store(self, obs, action, rew, obs2, done):
-        i = self.num_stores % self.n
-        self.o[i] = obs
-        self.a[i] = action
-        self.r[i] = rew
-        self.o2[i] = obs2
-        self.d[i] = done
-        self.num_stores += 1
-
-    def sample(self, minibatch_size):
-        """
-        Sample a random minibatch of transitions
-        :return:
-        """
-        active_storage_size = min(self.num_stores, self.n)
-        if minibatch_size > active_storage_size:
-            raise ValueError(f"Not enough samples in replay memory ({active_storage_size}) to sample minibatch_size "
-                             f"({minibatch_size})")
-
-        indices = np.random.choice(range(active_storage_size), minibatch_size, replace=False)
-        o = self.o[indices]
-        a = self.a[indices]
-        r = self.r[indices]
-        o2 = self.o2[indices]
-        d = self.d[indices]
-
-        return o, a, r, o2, d
-
-
 class QNetwork(nn.Module):
     def __init__(self, n_actions):
         super().__init__()
@@ -238,25 +197,6 @@ class QNetwork(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-
-class SimpleCrop(th.nn.Module):
-    """
-    Crops an image (deterministically) using the TF.crop function. (No simple crop can be found in the
-    torchvision.transforms library
-    """
-    def __init__(self, i, j, h, w):
-        super().__init__()
-        self.i = i
-        self.j = j
-        self.h = h
-        self.w = w
-
-    def forward(self, img):
-        return transforms.functional.crop(img, self.i, self.j, self.h, self.w)
-
-
-def annealed_epsilon(step, epsilon_start, epsilon_stop, anneal_finished_step):
-    return epsilon_start + (epsilon_stop - epsilon_start) * min(1, step / anneal_finished_step)
 
 
 
