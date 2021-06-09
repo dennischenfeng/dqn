@@ -87,8 +87,6 @@ def preprocess_obs_maxed_seq(obs_maxed_seq, preprocess_transform):
     result = preprocess_transform(result)
     # Squeeze out grayscale dimension (original RGB dim)
     result = result.squeeze(1)
-    # TODO: remove
-    assert tuple(result.shape) == (4, 84, 84)
     return result
 
 
