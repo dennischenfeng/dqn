@@ -32,14 +32,29 @@ class DQN():
         epsilon,
         gamma,
         batch_size,
-        target_update_steps,
+        update_freq,
+        target_update_freq,
         initial_non_update_steps,
+        initial_no_op_actions_max,
         optimizer_cls=th.optim.RMSprop,
         lr=1e-3
     ):
         """
+
+        :param n_steps:
+        :param epsilon:
+        :param gamma:
+        :param batch_size:
+        :param update_freq: in units of steps
+        :param target_update_freq: in units of q updates
+        :param initial_non_update_steps:
+        :param optimizer_cls:
+        :param lr:
+        :return:
         """
         optimizer_q = optimizer_cls(self.q.parameters(), lr=lr)
+
+        # TODO: implement no op actions at beginning of game
 
         obs = self.env.reset()
         for step in range(n_steps):
@@ -57,29 +72,33 @@ class DQN():
             obs = self.env.reset() if d else obs2
 
             # Use minibatch sampled from replay memory to take grad descent step (after completed initial steps)
-            if step >= initial_non_update_steps:
+            num_updates = 0
+            if step % update_freq == 0 and step >= initial_non_update_steps:
                 obsb, ab, rb, obs2b, db = self.replay_memory.sample(batch_size)  # `b` means "batch"
                 obsb, rb, obs2b, db = list(map(lambda x: th.tensor(x).float(), [obsb, rb, obs2b, db]))
                 ab = th.tensor(ab).long()
 
                 yb = rb + db * th.tensor(gamma) * th.max(self.q_target(obs2b), dim=1).values
-                # TODO: remove
-                assert tuple(yb.shape) == (batch_size,)
-                assert tuple(ab.shape) == (batch_size,)
                 # Obtain Q values by selecting actions (am) individually for each row of the minibatch
                 predb = self.q(obsb)[th.arange(batch_size), ab]
-                assert tuple(predb.shape) == (batch_size,)  # TODO: remove
                 loss = compute_loss(predb, yb)
 
                 optimizer_q.zero_grad()
                 loss.backward()
                 optimizer_q.step()
+                num_updates += 1
 
-            if step % target_update_steps == 0:
-                self.q_target = deepcopy(self.q)
+                if num_updates % target_update_freq == 0:
+                    self.q_target = deepcopy(self.q)
 
-    def predict(self, p_obs_seq_batched):
-        action = th.argmax(self.q(p_obs_seq_batched), dim=1)
+    def predict(self, obs):
+        """
+        requires obs to be in batched form
+
+        :param obs:
+        :return:
+        """
+        action = th.argmax(self.q(obs), dim=1)
         return action
 
 
