@@ -4,7 +4,8 @@ import torch as th
 import gym
 import mock
 from dqn.dqn import DQN, NatureQNetwork, compute_loss
-from dqn.preprocessed_atari_env import PreprocessedAtariEnv, OBS_MAXED_SEQUENCE_LENGTH, MOD_OBS_SHAPE
+from dqn.preprocessed_atari_env import PreprocessedAtariEnv, OBS_MAXED_SEQUENCE_LENGTH, MOD_OBS_SHAPE, \
+    ReorderedObsAtariEnv
 
 
 def test_nature_q_network():
@@ -48,17 +49,22 @@ def test_dqn():
     model = DQN(env, replay_memory_size=100)
 
     model.learn(
-        34, epsilon=0.1, gamma=0.99, batch_size=32, target_update_steps=10, lr=1e-3, initial_non_update_steps=32
+        34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
+        initial_non_update_steps=32, initial_no_op_actions_max=30
     )
 
 
-# def test_dqn_orig_pong_env():
-#     raw_env = gym.make("PongNoFrameskip-v4")
-#
-#     model = DQN(raw_env, replay_memory_size=100)
-#
-#     model.learn(
-#         34, epsilon=0.1, gamma=0.99, batch_size=32, target_update_steps=10, lr=1e-3, initial_non_update_steps=32
-#     )
+def test_dqn_orig_pong_env():
+    raw_env = gym.make("PongNoFrameskip-v4")
+    env = ReorderedObsAtariEnv(raw_env)
 
-# TODO: test with cartpole too
+    model = DQN(env, replay_memory_size=100)
+
+    model.learn(
+        34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
+        initial_non_update_steps=32, initial_no_op_actions_max=30
+    )
+
+
+# def test_dqn_cartpole_env():
+#     pass

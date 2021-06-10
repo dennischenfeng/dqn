@@ -98,3 +98,28 @@ def create_preprocessing_transform(crop_start_row):
         SimpleCrop(crop_start_row, 0, 84, 84)  # TODO: confirm that Nature paper crops differently for each game
     ])
 
+
+class ReorderedObsAtariEnv(gym.Env):
+    def __init__(self, env, new_ordering=(2, 0, 1)):
+        super().__init__()
+        self.env = env
+        self.new_ordering = new_ordering
+
+        orig_obs_shape = self.env.observation_space.shape
+        mod_obs_shape = tuple(np.array(orig_obs_shape)[self.new_ordering,])
+
+        self.action_space = self.env.action_space
+        self.observation_space = gym.spaces.Box(0, 255, mod_obs_shape, dtype=np.uint8)
+
+    def reset(self):
+        obs = self.env.reset()
+        mod_obs = obs.transpose(*self.new_ordering)
+        return mod_obs
+
+    def step(self, action):
+        obs2, rew, done, info = self.env.step(action)
+        mod_obs2 = obs2.transpose(*self.new_ordering)
+        return mod_obs2, rew, done, info
+
+    def render(self, mode="human"):
+        self.env.render(mode)
