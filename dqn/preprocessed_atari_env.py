@@ -5,6 +5,7 @@ from torchvision import transforms
 from dqn.utils import SimpleCrop, annealed_epsilon
 
 ATARI_OBS_SHAPE = (210, 160, 3)
+MOD_OBS_SHAPE = (4, 84, 84)
 OBS_MAXED_SEQUENCE_LENGTH = 4  # number of obs_maxed's to keep as "last N frames" to feed as input to Q network
 # Need different image cropping (roughly capturing the playing area of screen) for each env; starting row for crop
 CROP_START_ROW = {"PongNoFrameskip-v4": 18}
@@ -25,8 +26,7 @@ class PreprocessedAtariEnv(gym.Env):
         self.latest_obs_maxed_seq = []
 
         self.action_space = self.env.action_space
-        # TODO: implement
-        self.observation_space = None
+        self.observation_space = gym.spaces.Box(0, 255, MOD_OBS_SHAPE, dtype=np.uint8)
 
     def reset(self):
         """
@@ -85,6 +85,7 @@ def preprocess_obs_maxed_seq(obs_maxed_seq, preprocess_transform):
     result = th.tensor(obs_maxed_seq).float()
     result = result.permute(0, 3, 1, 2)
     result = preprocess_transform(result)
+    result = result.byte()
     # Squeeze out grayscale dimension (original RGB dim)
     result = result.squeeze(1)
     return np.array(result)
