@@ -61,18 +61,18 @@ def test_replay_memory_simple_obs():
         m.sample(11)
 
 
-def test_replay_memory_representative_obs(mod_obs_batch):
-    p_obs_seq = mod_obs_batch[0]
+def test_replay_memory_representative_obs():
+    mod_obs = np.ones((4, 84, 84))
     action = 2
     rew = 50
-    p_obs2 = 2 * p_obs_seq
+    p_obs2 = 2 * mod_obs
     done = False
 
-    m = ReplayMemory(10, p_obs_seq.shape)
-    m.store(p_obs_seq, action, rew, p_obs2, done)
+    m = ReplayMemory(10, mod_obs.shape)
+    m.store(mod_obs, action, rew, p_obs2, done)
 
     pos_s, a_s, r_s, pos2_s, d_s = m.sample(1)
-    assert (pos_s[0] == p_obs_seq).all()
+    assert (pos_s[0] == mod_obs).all()
     assert a_s[0] == action
     assert r_s[0] == rew
     assert (pos2_s[0] == p_obs2).all()
