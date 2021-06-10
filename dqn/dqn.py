@@ -20,6 +20,8 @@ class DQN():
         self.env = env
         if q_network is None:
             self.q = NatureQNetwork(env.observation_space, env.action_space)
+        else:
+            self.q = q_network
         self.q_target = deepcopy(self.q)
 
         # Instantiate replay memory with mod_obs shape

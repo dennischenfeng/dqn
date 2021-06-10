@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 import torch as th
+import torch.nn as nn
 import gym
 import mock
 from dqn.dqn import DQN, NatureQNetwork, compute_loss
@@ -66,5 +67,23 @@ def test_dqn_orig_pong_env():
     )
 
 
-# def test_dqn_cartpole_env():
-#     pass
+def test_dqn_cartpole_env():
+    env = gym.make("CartPole-v1")
+    n_inputs = env.observation_space.shape[0]
+    n_actions = env.action_space.n
+    q_network = nn.Sequential(
+        nn.Linear(n_inputs, 64),
+        nn.ReLU(),
+        nn.Linear(64, 64),
+        nn.ReLU(),
+        nn.Linear(64, 64),
+        nn.ReLU(),
+        nn.Linear(64, n_actions)
+    )
+
+    model = DQN(env, q_network=q_network, replay_memory_size=100)
+
+    model.learn(
+        34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
+        initial_non_update_steps=32, initial_no_op_actions_max=30
+    )
