@@ -1,12 +1,12 @@
-
 import gym
 import numpy as np
 from copy import deepcopy
-
 import torch as th
 import torch.nn as nn
-
 from dqn.replay_memory import ReplayMemory
+from dqn.preprocessed_atari_env import OBS_MAXED_SEQUENCE_LENGTH
+
+NATURE_Q_NETWORK_ALLOWED_CHANNELS = (1, 3, 4)
 
 
 class DQN():
@@ -14,12 +14,12 @@ class DQN():
     A working implementation that reproduces DQN for Atari, based entirely from the original Nature paper
 
     """
-    def __init__(self, env, replay_memory_size=1e6):
+    def __init__(self, env, q_network=None, replay_memory_size=1e6):
         if not isinstance(env.action_space, gym.spaces.discrete.Discrete):
             raise ValueError("`Environment action space must be `Discrete`; DQN does not support otherwise.")
         self.env = env
-        n_actions = self.env.action_space.n
-        self.q = QNetwork(n_actions)
+        if q_network is None:
+            self.q = NatureQNetwork(env.observation_space, env.action_space)
         self.q_target = deepcopy(self.q)
 
         # Instantiate replay memory with mod_obs shape
@@ -45,7 +45,8 @@ class DQN():
         for step in range(n_steps):
             # Take step and store transition in replay memory
             if np.random.random() > epsilon:
-                a = self.predict(obs.unsqueeze(0)).item()
+                obs_t = th.tensor(obs).float()
+                a = self.predict(obs_t.unsqueeze(0)).item()
             else:
                 a = self.env.action_space.sample()
             obs2, r, d, _ = self.env.step(a)
@@ -82,12 +83,22 @@ class DQN():
         return action
 
 
-class QNetwork(nn.Module):
-    def __init__(self, n_actions):
+class NatureQNetwork(nn.Module):
+    def __init__(self, observation_space, action_space):
+        """
+        requires image obs are ordered like "CxHxW"
+
+        :param observation_space:
+        :param action_space:
+        """
         super().__init__()
-        n_input_channels = 4
-        n_flattened_activations = 3136
-        self.net = nn.Sequential(
+        assert len(observation_space.shape) == 3
+        n_input_channels = observation_space.shape[0]
+        assert n_input_channels in NATURE_Q_NETWORK_ALLOWED_CHANNELS
+        assert isinstance(action_space, gym.spaces.discrete.Discrete)
+        n_actions = action_space.n
+
+        self.cnn = nn.Sequential(
             nn.Conv2d(n_input_channels, 32, kernel_size=8, stride=4, padding=0),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0),
@@ -95,13 +106,20 @@ class QNetwork(nn.Module):
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
             nn.ReLU(),
             nn.Flatten(),
+        )
+
+        sample_obs = th.tensor(observation_space.sample()).float()
+        with th.no_grad():
+            n_flattened_activations = self.cnn(sample_obs.unsqueeze(0)).shape[-1]
+
+        self.fc = nn.Sequential(
             nn.Linear(n_flattened_activations, 512),
             nn.ReLU(),
             nn.Linear(512, n_actions),
         )
 
     def forward(self, x):
-        return self.net(x)
+        return self.fc(self.cnn(x))
 
 
 def compute_loss(predictions, targets):
