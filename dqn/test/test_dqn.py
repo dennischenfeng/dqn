@@ -7,6 +7,20 @@ import mock
 from dqn.dqn import DQN, NatureQNetwork, compute_loss
 from dqn.preprocessed_atari_env import PreprocessedAtariEnv, OBS_MAXED_SEQUENCE_LENGTH, MOD_OBS_SHAPE, \
     ReorderedObsAtariEnv
+from dqn.utils import evaluate_model
+
+
+def simple_mlp_network(n_inputs, n_outputs):
+    net = nn.Sequential(
+        nn.Linear(n_inputs, 64),
+        nn.ReLU(),
+        nn.Linear(64, 64),
+        nn.ReLU(),
+        nn.Linear(64, 64),
+        nn.ReLU(),
+        nn.Linear(64, n_outputs)
+    )
+    return net
 
 
 def test_nature_q_network():
@@ -71,15 +85,7 @@ def test_dqn_cartpole_env():
     env = gym.make("CartPole-v1")
     n_inputs = env.observation_space.shape[0]
     n_actions = env.action_space.n
-    q_network = nn.Sequential(
-        nn.Linear(n_inputs, 64),
-        nn.ReLU(),
-        nn.Linear(64, 64),
-        nn.ReLU(),
-        nn.Linear(64, 64),
-        nn.ReLU(),
-        nn.Linear(64, n_actions)
-    )
+    q_network = simple_mlp_network(n_inputs, n_actions)
 
     model = DQN(env, q_network=q_network, replay_memory_size=100)
 
@@ -87,3 +93,19 @@ def test_dqn_cartpole_env():
         34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
         initial_non_update_steps=32, initial_no_op_actions_max=30
     )
+
+
+def test_evaluate_model():
+    env = gym.make("CartPole-v1")
+    n_inputs = env.observation_space.shape[0]
+    n_actions = env.action_space.n
+    q_network = simple_mlp_network(n_inputs, n_actions)
+
+    model = DQN(env, q_network=q_network, replay_memory_size=100)
+
+    res = evaluate_model(model, env, num_trials=2, max_steps=500)
+    assert isinstance(res, float)
+
+    with pytest.warns(UserWarning):
+        res = evaluate_model(model, env, num_trials=2, max_steps=1)
+        assert isinstance(res, float)

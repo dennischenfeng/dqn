@@ -28,7 +28,7 @@ def evaluate_model(model, env, num_trials=10, max_steps=int(1e6)):
     with th.no_grad():
         ep_rews = []
         obs = env.reset()
-        for i in range(num_trials):
+        for _ in range(num_trials):
             ep_rew = 0
             done = False
             for step in range(max_steps):
