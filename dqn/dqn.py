@@ -3,8 +3,10 @@ import numpy as np
 from copy import deepcopy
 import torch as th
 import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
 from dqn.replay_memory import ReplayMemory
 from dqn.preprocessed_atari_env import OBS_MAXED_SEQUENCE_LENGTH
+from dqn.utils import evaluate_model
 
 NATURE_Q_NETWORK_ALLOWED_CHANNELS = (1, 3, 4)
 
@@ -14,10 +16,11 @@ class DQN():
     A working implementation that reproduces DQN for Atari, based entirely from the original Nature paper
 
     """
-    def __init__(self, env, q_network=None, replay_memory_size=1e6):
+    def __init__(self, env, q_network=None, replay_memory_size=1e6, tb_log_dir=None):
         if not isinstance(env.action_space, gym.spaces.discrete.Discrete):
             raise ValueError("`Environment action space must be `Discrete`; DQN does not support otherwise.")
         self.env = env
+        self.eval_env = deepcopy(env)
         if q_network is None:
             self.q = NatureQNetwork(env.observation_space, env.action_space)
         else:
@@ -27,6 +30,12 @@ class DQN():
         # Instantiate replay memory with mod_obs shape
         mod_obs = self.env.reset()
         self.replay_memory = ReplayMemory(replay_memory_size, mod_obs.shape)
+
+        # tensorboard writer
+        self.tb_log_dir = tb_log_dir
+        self.writer = None
+        if self.tb_log_dir:
+            self.writer = SummaryWriter(tb_log_dir, flush_secs=30)
 
     def learn(
         self,
@@ -39,7 +48,8 @@ class DQN():
         initial_non_update_steps,
         initial_no_op_actions_max,
         optimizer_cls=th.optim.RMSprop,
-        lr=1e-3
+        lr=1e-3,
+        eval_freq=1000,
     ):
         """
 
@@ -49,11 +59,13 @@ class DQN():
         :param batch_size:
         :param update_freq: in units of steps
         :param target_update_freq: in units of q updates
+        :param eval_freq: in units of q updates; only used if tensorboard logging
         :param initial_non_update_steps:
         :param optimizer_cls:
         :param lr:
         :return:
         """
+        n_steps = int(n_steps)
         optimizer_q = optimizer_cls(self.q.parameters(), lr=lr)
 
         # TODO: implement no op actions at beginning of game
@@ -62,8 +74,7 @@ class DQN():
         for step in range(n_steps):
             # Take step and store transition in replay memory
             if np.random.random() > epsilon:
-                obs_t = th.tensor(obs).float()
-                a = self.predict(obs_t.unsqueeze(0)).item()
+                a = self.predict(obs)
             else:
                 a = self.env.action_space.sample()
             obs2, r, d, _ = self.env.step(a)
@@ -93,6 +104,13 @@ class DQN():
                 if num_updates % target_update_freq == 0:
                     self.q_target = deepcopy(self.q)
 
+                if self.tb_log_dir:
+                    self.writer.add_scalar("train_loss", loss.item(), step)
+
+                    if num_updates % eval_freq == 0:
+                        mean_ep_rew = evaluate_model(self, self.eval_env)
+                        self.writer.add_scalar("mean_ep_rew", mean_ep_rew, step)
+
     def predict(self, obs):
         """
         requires obs to be in batched form
@@ -100,7 +118,11 @@ class DQN():
         :param obs:
         :return:
         """
-        action = th.argmax(self.q(obs), dim=1)
+
+        obs_t = th.tensor(obs).float()
+        obs_t = obs_t.unsqueeze(0)
+        action = th.argmax(self.q(obs_t), dim=1)
+        action = action.item()
         return action
 
 
