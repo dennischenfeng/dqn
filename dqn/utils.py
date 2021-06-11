@@ -1,4 +1,5 @@
-
+import warnings
+import numpy as np
 import torch as th
 from torchvision import transforms
 
@@ -21,3 +22,27 @@ class SimpleCrop(th.nn.Module):
 
 def annealed_epsilon(step, epsilon_start, epsilon_stop, anneal_finished_step):
     return epsilon_start + (epsilon_stop - epsilon_start) * min(1, step / anneal_finished_step)
+
+
+def evaluate_model(model, env, num_trials=10, max_steps=int(1e6)):
+    with th.no_grad():
+        ep_rews = []
+        obs = env.reset()
+        for i in range(num_trials):
+            ep_rew = 0
+            done = False
+            for step in range(max_steps):
+                action = model.predict(obs)
+                obs, reward, done, info = env.step(action)
+                ep_rew += reward
+                if done:
+                    obs = env.reset()
+                    break
+
+            ep_rews.append(ep_rew)
+
+            if not done:
+                warnings.warn(f"While evaluating the model, reached max_steps ({max_steps}) before reaching terminal "
+                              f"state in env. Terminating it at max_steps.")
+
+    return np.mean(ep_rews)
