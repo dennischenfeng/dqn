@@ -113,10 +113,14 @@ class DQN():
 
                 if self.tb_log_dir:
                     self.writer.add_scalar("train_loss", loss.item(), step)
+                    self.writer.add_scalar("epsilon", epsilon_fn(step), step)
 
                     if num_updates % eval_freq == 0:
-                        mean_ep_rew = evaluate_model(self, self.eval_env)
-                        self.writer.add_scalar("mean_ep_rew", mean_ep_rew, step)
+                        ep_rews = evaluate_model(self, self.eval_env, num_trials=100)
+                        self.writer.add_scalar("mean_ep_rew", np.mean(ep_rews), step)
+                        self.writer.add_scalar("max_ep_rew", np.max(ep_rews), step)
+                        self.writer.add_scalar("min_ep_rew", np.min(ep_rews), step)
+                        self.writer.add_scalar("std_ep_rew", np.std(ep_rews), step)
 
     def predict(self, obs):
         """
