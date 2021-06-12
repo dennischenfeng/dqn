@@ -1,6 +1,7 @@
 import warnings
 import numpy as np
 import torch as th
+import torch.nn as nn
 from torchvision import transforms
 
 
@@ -45,4 +46,17 @@ def evaluate_model(model, env, num_trials=10, max_steps=int(1e6)):
                 warnings.warn(f"While evaluating the model, reached max_steps ({max_steps}) before reaching terminal "
                               f"state in env. Terminating it at max_steps.")
 
-    return np.mean(ep_rews)
+    return ep_rews
+
+
+def basic_mlp_network(n_inputs, n_outputs):
+    net = nn.Sequential(
+        nn.Linear(n_inputs, 64),
+        nn.ReLU(),
+        nn.Linear(64, 64),
+        nn.ReLU(),
+        nn.Linear(64, 64),
+        nn.ReLU(),
+        nn.Linear(64, n_outputs)
+    )
+    return net

@@ -8,20 +8,7 @@ from functools import partial
 from dqn.dqn import DQN, NatureQNetwork, compute_loss
 from dqn.preprocessed_atari_env import PreprocessedAtariEnv, OBS_MAXED_SEQUENCE_LENGTH, MOD_OBS_SHAPE, \
     ReorderedObsAtariEnv
-from dqn.utils import evaluate_model, annealed_epsilon
-
-
-def simple_mlp_network(n_inputs, n_outputs):
-    net = nn.Sequential(
-        nn.Linear(n_inputs, 64),
-        nn.ReLU(),
-        nn.Linear(64, 64),
-        nn.ReLU(),
-        nn.Linear(64, 64),
-        nn.ReLU(),
-        nn.Linear(64, n_outputs)
-    )
-    return net
+from dqn.utils import evaluate_model, annealed_epsilon, basic_mlp_network
 
 
 def test_nature_q_network():
@@ -100,7 +87,7 @@ def test_dqn_cartpole_env():
     env = gym.make("CartPole-v1")
     n_inputs = env.observation_space.shape[0]
     n_actions = env.action_space.n
-    q_network = simple_mlp_network(n_inputs, n_actions)
+    q_network = basic_mlp_network(n_inputs, n_actions)
 
     model = DQN(env, q_network=q_network, replay_memory_size=100)
 
@@ -110,17 +97,3 @@ def test_dqn_cartpole_env():
     )
 
 
-def test_evaluate_model():
-    env = gym.make("CartPole-v1")
-    n_inputs = env.observation_space.shape[0]
-    n_actions = env.action_space.n
-    q_network = simple_mlp_network(n_inputs, n_actions)
-
-    model = DQN(env, q_network=q_network, replay_memory_size=100)
-
-    res = evaluate_model(model, env, num_trials=2, max_steps=500)
-    assert isinstance(res, float)
-
-    with pytest.warns(UserWarning):
-        res = evaluate_model(model, env, num_trials=2, max_steps=1)
-        assert isinstance(res, float)
