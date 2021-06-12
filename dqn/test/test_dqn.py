@@ -4,10 +4,11 @@ import torch as th
 import torch.nn as nn
 import gym
 import mock
+from functools import partial
 from dqn.dqn import DQN, NatureQNetwork, compute_loss
 from dqn.preprocessed_atari_env import PreprocessedAtariEnv, OBS_MAXED_SEQUENCE_LENGTH, MOD_OBS_SHAPE, \
     ReorderedObsAtariEnv
-from dqn.utils import evaluate_model
+from dqn.utils import evaluate_model, annealed_epsilon
 
 
 def simple_mlp_network(n_inputs, n_outputs):
@@ -65,6 +66,20 @@ def test_dqn():
 
     model.learn(
         34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
+        initial_non_update_steps=32, initial_no_op_actions_max=30
+    )
+
+
+def test_dqn_annealed_epsilon():
+    raw_env = gym.make("PongNoFrameskip-v4")
+    env = PreprocessedAtariEnv(raw_env)
+    model = DQN(env, replay_memory_size=100)
+
+    steps = 34
+    epsilon_fn = partial(annealed_epsilon, epsilon_start=1, epsilon_stop=0.1, anneal_finished_step=30)
+
+    model.learn(
+        steps, epsilon=epsilon_fn, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
         initial_non_update_steps=32, initial_no_op_actions_max=30
     )
 
