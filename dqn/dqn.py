@@ -46,7 +46,7 @@ class DQN():
         update_freq,
         target_update_freq,
         initial_non_update_steps,
-        initial_no_op_actions_max,
+        initial_no_op_actions_max=30,
         optimizer_cls=th.optim.RMSprop,
         lr=1e-3,
         eval_freq=1000,
@@ -54,7 +54,7 @@ class DQN():
         """
 
         :param n_steps:
-        :param epsilon:
+        :param epsilon: float (constant epsilon) or function (epsilon is a function of num steps taken).
         :param gamma:
         :param batch_size:
         :param update_freq: in units of steps
@@ -66,14 +66,22 @@ class DQN():
         :return:
         """
         n_steps = int(n_steps)
+        if isinstance(epsilon, (float, int)):
+            def epsilon_fn(_):
+                return float(epsilon)
+        else:
+            assert callable(epsilon)
+            epsilon_fn = epsilon
+
         optimizer_q = optimizer_cls(self.q.parameters(), lr=lr)
 
         # TODO: implement no op actions at beginning of game
 
         obs = self.env.reset()
+        num_updates = 0
         for step in range(n_steps):
             # Take step and store transition in replay memory
-            if np.random.random() > epsilon:
+            if np.random.random() > epsilon_fn(step):
                 a = self.predict(obs)
             else:
                 a = self.env.action_space.sample()
@@ -85,7 +93,6 @@ class DQN():
             obs = self.env.reset() if d else obs2
 
             # Use minibatch sampled from replay memory to take grad descent step (after completed initial steps)
-            num_updates = 0
             if step % update_freq == 0 and step >= initial_non_update_steps:
                 obsb, ab, rb, obs2b, db = self.replay_memory.sample(batch_size)  # `b` means "batch"
                 obsb, rb, obs2b, db = list(map(lambda x: th.tensor(x).float(), [obsb, rb, obs2b, db]))
