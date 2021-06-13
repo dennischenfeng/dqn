@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "dqn"
+version = "0.1.0"
+description = ""
+authors = ["dennis <dennisfeng2@gmail.com>"]
+license = "MIT License"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+numpy = "^1.20.3"
+torch = "^1.8.1"
+gym = {extras = ["atari"], version = "^0.18.3"}
+tensorboard = "^2.5.0"
+torchvision = "^0.9.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
+mock = "^4.0.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
