@@ -73,6 +73,8 @@ class DQN():
             assert callable(epsilon)
             epsilon_fn = epsilon
 
+        initial_no_op_actions = np.random.randint(initial_no_op_actions_max + 1)
+
         optimizer_q = optimizer_cls(self.q.parameters(), lr=lr)
 
         # TODO: implement no op actions at beginning of game
@@ -81,7 +83,9 @@ class DQN():
         num_updates = 0
         for step in range(n_steps):
             # Take step and store transition in replay memory
-            if np.random.random() > epsilon_fn(step):
+            if step < initial_no_op_actions:
+                a = 0
+            elif np.random.random() > epsilon_fn(step):
                 a = self.predict(obs)
             else:
                 a = self.env.action_space.sample()
