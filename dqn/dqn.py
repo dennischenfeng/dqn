@@ -77,8 +77,6 @@ class DQN():
 
         optimizer_q = optimizer_cls(self.q.parameters(), lr=lr)
 
-        # TODO: implement no op actions at beginning of game
-
         obs = self.env.reset()
         num_updates = 0
         for step in range(n_steps):
