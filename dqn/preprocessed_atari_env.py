@@ -8,7 +8,10 @@ ATARI_OBS_SHAPE = (210, 160, 3)
 MOD_OBS_SHAPE = (4, 84, 84)
 OBS_MAXED_SEQUENCE_LENGTH = 4  # number of obs_maxed's to keep as "last N frames" to feed as input to Q network
 # Need different image cropping (roughly capturing the playing area of screen) for each env; starting row for crop
-CROP_START_ROW = {"PongNoFrameskip-v4": 18}
+CROP_START_ROW = {
+    "PongNoFrameskip-v4": 18,
+    "BreakoutNoFrameskip-v4": 18
+}
 
 
 class PreprocessedAtariEnv(gym.Env):
