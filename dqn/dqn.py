@@ -50,6 +50,7 @@ class DQN():
         optimizer_cls=th.optim.RMSprop,
         lr=1e-3,
         eval_freq=1000,
+        eval_num_episodes=10
     ):
         """
 
@@ -118,7 +119,7 @@ class DQN():
                     self.writer.add_scalar("epsilon", epsilon_fn(step), step)
 
                     if num_updates % eval_freq == 0:
-                        ep_rews = evaluate_model(self, self.eval_env, num_trials=100)
+                        ep_rews = evaluate_model(self, self.eval_env, num_episodes=eval_num_episodes)
                         self.writer.add_scalar("mean_ep_rew", np.mean(ep_rews), step)
                         self.writer.add_scalar("max_ep_rew", np.max(ep_rews), step)
                         self.writer.add_scalar("min_ep_rew", np.min(ep_rews), step)
@@ -131,7 +132,6 @@ class DQN():
         :param obs:
         :return:
         """
-
         obs_t = th.tensor(obs).float()
         obs_t = obs_t.unsqueeze(0)
         action = th.argmax(self.q(obs_t), dim=1)
