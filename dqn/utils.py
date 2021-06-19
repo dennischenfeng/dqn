@@ -25,11 +25,11 @@ def annealed_epsilon(step, epsilon_start, epsilon_stop, anneal_finished_step):
     return epsilon_start + (epsilon_stop - epsilon_start) * min(1, step / anneal_finished_step)
 
 
-def evaluate_model(model, env, num_trials=10, max_steps=int(1e6)):
+def evaluate_model(model, env, num_episodes=10, max_steps=int(1e6)):
     with th.no_grad():
         ep_rews = []
         obs = env.reset()
-        for _ in range(num_trials):
+        for _ in range(num_episodes):
             ep_rew = 0
             done = False
             for step in range(max_steps):

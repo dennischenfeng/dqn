@@ -43,9 +43,9 @@ def test_evaluate_model():
 
     model = DQN(env, q_network=q_network, replay_memory_size=100)
 
-    res = evaluate_model(model, env, num_trials=2, max_steps=500)
+    res = evaluate_model(model, env, num_episodes=2, max_steps=500)
     assert isinstance(res, list)
 
     with pytest.warns(UserWarning):
-        res = evaluate_model(model, env, num_trials=2, max_steps=1)
+        res = evaluate_model(model, env, num_episodes=2, max_steps=1)
         assert isinstance(res, list)
