@@ -80,6 +80,8 @@ class DQN():
 
         obs = self.env.reset()
         num_updates = 0
+        ep_rew = 0
+        ep_length = 0
         for step in range(n_steps):
             # Take step and store transition in replay memory
             if step < initial_no_op_actions:
@@ -89,11 +91,21 @@ class DQN():
             else:
                 a = self.env.action_space.sample()
             obs2, r, d, _ = self.env.step(a)
+            ep_rew += r
+            ep_length += 1
 
             self.replay_memory.store(obs, a, r, obs2, d)
 
             # For next iteration
-            obs = self.env.reset() if d else obs2
+            if d:
+                obs = self.env.reset()
+                if self.tb_log_dir:
+                    self.writer.add_scalar("train_ep_rew", ep_rew, step)
+                    self.writer.add_scalar("train_ep_length", ep_length, step)
+                ep_rew = 0
+                ep_length = 0
+            else:
+                obs = obs2
 
             # Use minibatch sampled from replay memory to take grad descent step (after completed initial steps)
             if step % update_freq == 0 and step >= initial_non_update_steps:
@@ -120,10 +132,10 @@ class DQN():
 
                     if num_updates % eval_freq == 0:
                         ep_rews = evaluate_model(self, self.eval_env, num_episodes=eval_num_episodes)
-                        self.writer.add_scalar("mean_ep_rew", np.mean(ep_rews), step)
-                        self.writer.add_scalar("max_ep_rew", np.max(ep_rews), step)
-                        self.writer.add_scalar("min_ep_rew", np.min(ep_rews), step)
-                        self.writer.add_scalar("std_ep_rew", np.std(ep_rews), step)
+                        self.writer.add_scalar("eval_ep_rew_mean", np.mean(ep_rews), step)
+                        self.writer.add_scalar("eval_ep_rew_max", np.max(ep_rews), step)
+                        self.writer.add_scalar("eval_ep_rew_min", np.min(ep_rews), step)
+                        self.writer.add_scalar("eval_ep_rew_std", np.std(ep_rews), step)
 
     def predict(self, obs):
         """

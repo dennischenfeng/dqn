@@ -97,3 +97,18 @@ def test_dqn_cartpole_env():
     )
 
 
+def test_dqn_cartpole_env_tb(tmpdir):
+    tmpdir = str(tmpdir)
+
+    env = gym.make("CartPole-v1")
+    n_inputs = env.observation_space.shape[0]
+    n_actions = env.action_space.n
+    q_network = basic_mlp_network(n_inputs, n_actions)
+
+    model = DQN(env, q_network=q_network, replay_memory_size=100, tb_log_dir=tmpdir)
+
+    model.learn(
+        34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
+        initial_non_update_steps=32, initial_no_op_actions_max=30
+    )
+
