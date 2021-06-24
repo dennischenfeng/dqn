@@ -19,7 +19,7 @@ def test_replay_memory_simple_obs():
     g = sample_generator()
 
     o, a, r, o2, d = next(g)
-    m = ReplayMemory(10, o.shape)
+    m = ReplayMemory(10, o.shape, o.dtype)
 
     # No samples stored yet
     with pytest.raises(ValueError):
@@ -69,7 +69,7 @@ def test_replay_memory_representative_obs():
     p_obs2 = 2 * mod_obs
     done = False
 
-    m = ReplayMemory(10, mod_obs.shape)
+    m = ReplayMemory(10, mod_obs.shape, mod_obs.dtype)
     m.store(mod_obs, action, rew, p_obs2, done)
 
     pos_s, a_s, r_s, pos2_s, d_s = m.sample(1)
@@ -82,7 +82,7 @@ def test_replay_memory_representative_obs():
 
 def test_initialize_replay_memory():
     env = gym.make("CartPole-v1")
-    m = ReplayMemory(100, env.observation_space.shape)
+    m = ReplayMemory(100, env.observation_space.shape, env.observation_space.dtype)
 
     n_steps = 70
     initialize_replay_memory(n_steps, env, m)

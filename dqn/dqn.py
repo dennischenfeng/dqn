@@ -29,7 +29,7 @@ class DQN():
 
         # Instantiate replay memory with mod_obs shape
         mod_obs = self.env.reset()
-        self.replay_memory = ReplayMemory(replay_memory_size, mod_obs.shape)
+        self.replay_memory = ReplayMemory(replay_memory_size, mod_obs.shape, mod_obs.dtype)
 
         # tensorboard writer
         self.tb_log_dir = tb_log_dir

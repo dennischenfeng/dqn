@@ -6,13 +6,13 @@ class ReplayMemory():
     """
     Replay memory data buffer for storing past transitions
     """
-    def __init__(self, n, obs_shape):
+    def __init__(self, n, obs_shape, obs_dtype):
         n = int(n)
         self.n = n
-        self.o = np.zeros((n, *obs_shape))
+        self.o = np.zeros((n, *obs_shape), dtype=obs_dtype)
         self.a = np.zeros(n)
         self.r = np.zeros(n)
-        self.o2 = np.zeros((n, *obs_shape))
+        self.o2 = np.zeros((n, *obs_shape), dtype=obs_dtype)
         self.d = np.full(n, False)
         self.num_stores = 0
 

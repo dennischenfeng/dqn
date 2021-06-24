@@ -85,10 +85,9 @@ def preprocess_obs_maxed_seq(obs_maxed_seq, preprocess_transform):
     for a in obs_maxed_seq:
         assert a.shape == ATARI_OBS_SHAPE
 
-    result = th.tensor(obs_maxed_seq).float()
+    result = th.tensor(obs_maxed_seq)
     result = result.permute(0, 3, 1, 2)
     result = preprocess_transform(result)
-    result = result.byte()
     # Squeeze out grayscale dimension (original RGB dim)
     result = result.squeeze(1)
     return np.array(result)
