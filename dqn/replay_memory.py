@@ -43,3 +43,23 @@ class ReplayMemory():
         d = self.d[indices]
 
         return o, a, r, o2, d
+
+
+def initialize_replay_memory(n_steps, env, replay_memory):
+    """
+    Initialize with random steps from env
+
+    :param n_steps:
+    :param env:
+    :param replay_memory:
+    :return:
+    """
+    obs = env.reset()
+    for step in range(n_steps):
+        a = env.action_space.sample()
+        obs2, r, d, _ = env.step(a)
+
+        replay_memory.store(obs, a, r, obs2, d)
+
+        # For next iteration
+        obs = env.reset() if d else obs2

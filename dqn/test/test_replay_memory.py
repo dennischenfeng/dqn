@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
-from dqn.replay_memory import ReplayMemory
+import gym
+from dqn.replay_memory import ReplayMemory, initialize_replay_memory
 
 
 def test_replay_memory_simple_obs():
@@ -77,3 +78,13 @@ def test_replay_memory_representative_obs():
     assert r_s[0] == rew
     assert (pos2_s[0] == p_obs2).all()
     assert d_s[0] == done
+
+
+def test_initialize_replay_memory():
+    env = gym.make("CartPole-v1")
+    m = ReplayMemory(100, env.observation_space.shape)
+
+    n_steps = 70
+    initialize_replay_memory(n_steps, env, m)
+    assert m.num_stores == n_steps
+
