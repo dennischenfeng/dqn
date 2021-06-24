@@ -73,7 +73,6 @@ class PreprocessedAtariEnv(gym.Env):
         self.latest_obs_maxed_seq.pop(0)
         self.latest_obs_maxed_seq.append(obs_maxed)
         mod_obs = preprocess_obs_maxed_seq(self.latest_obs_maxed_seq, self.preprocess_transform)
-
         return mod_obs, total_rew, done, info
 
     def render(self, mode="human"):
@@ -85,7 +84,10 @@ def preprocess_obs_maxed_seq(obs_maxed_seq, preprocess_transform):
     for a in obs_maxed_seq:
         assert a.shape == ATARI_OBS_SHAPE
 
-    result = th.tensor(obs_maxed_seq)
+    # Numpy's conversion from list of arrays to array is much faster than pytorch's conversion to tensor
+    obs_maxed_seq_arr = np.array(obs_maxed_seq)
+    result = th.tensor(obs_maxed_seq_arr)
+
     result = result.permute(0, 3, 1, 2)
     result = preprocess_transform(result)
     # Squeeze out grayscale dimension (original RGB dim)
