@@ -53,7 +53,7 @@ def test_dqn():
 
     model.learn(
         34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
-        initial_non_update_steps=32, initial_no_op_actions_max=30
+        initial_replay_memory_steps=32, initial_no_op_actions_max=30
     )
 
 
@@ -67,7 +67,7 @@ def test_dqn_annealed_epsilon():
 
     model.learn(
         steps, epsilon=epsilon_fn, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
-        initial_non_update_steps=32, initial_no_op_actions_max=30
+        initial_replay_memory_steps=32, initial_no_op_actions_max=30
     )
 
 
@@ -79,7 +79,7 @@ def test_dqn_orig_pong_env():
 
     model.learn(
         34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
-        initial_non_update_steps=32, initial_no_op_actions_max=30
+        initial_replay_memory_steps=32, initial_no_op_actions_max=30
     )
 
 
@@ -93,7 +93,7 @@ def test_dqn_cartpole_env():
 
     model.learn(
         34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
-        initial_non_update_steps=32, initial_no_op_actions_max=30
+        initial_replay_memory_steps=32, initial_no_op_actions_max=30
     )
 
 
@@ -109,6 +109,6 @@ def test_dqn_cartpole_env_tb(tmpdir):
 
     model.learn(
         34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
-        initial_non_update_steps=32, initial_no_op_actions_max=30
+        initial_replay_memory_steps=32, initial_no_op_actions_max=30
     )
 
