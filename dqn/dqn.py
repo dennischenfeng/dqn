@@ -4,7 +4,7 @@ from copy import deepcopy
 import torch as th
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
-from dqn.replay_memory import ReplayMemory
+from dqn.replay_memory import ReplayMemory, initialize_replay_memory
 from dqn.preprocessed_atari_env import OBS_MAXED_SEQUENCE_LENGTH
 from dqn.utils import evaluate_model
 
@@ -45,7 +45,7 @@ class DQN():
         batch_size,
         update_freq,
         target_update_freq,
-        initial_non_update_steps,
+        initial_replay_memory_steps,
         initial_no_op_actions_max=30,
         optimizer_cls=th.optim.RMSprop,
         lr=1e-3,
@@ -61,7 +61,7 @@ class DQN():
         :param update_freq: in units of steps
         :param target_update_freq: in units of q updates
         :param eval_freq: in units of q updates; only used if tensorboard logging
-        :param initial_non_update_steps:
+        :param initial_replay_memory_steps:
         :param optimizer_cls:
         :param lr:
         :return:
@@ -74,14 +74,15 @@ class DQN():
             assert callable(epsilon)
             epsilon_fn = epsilon
 
+        initialize_replay_memory(initial_replay_memory_steps, self.env, self.replay_memory)
+
         initial_no_op_actions = np.random.randint(initial_no_op_actions_max + 1)
-
         optimizer_q = optimizer_cls(self.q.parameters(), lr=lr)
-
-        obs = self.env.reset()
         num_updates = 0
         ep_rew = 0
         ep_length = 0
+        obs = self.env.reset()
+
         for step in range(n_steps):
             # Take step and store transition in replay memory
             if step < initial_no_op_actions:
@@ -108,13 +109,13 @@ class DQN():
                 obs = obs2
 
             # Use minibatch sampled from replay memory to take grad descent step (after completed initial steps)
-            if step % update_freq == 0 and step >= initial_non_update_steps:
+            if step % update_freq == 0:
                 obsb, ab, rb, obs2b, db = self.replay_memory.sample(batch_size)  # `b` means "batch"
                 obsb, rb, obs2b, db = list(map(lambda x: th.tensor(x).float(), [obsb, rb, obs2b, db]))
                 ab = th.tensor(ab).long()
 
                 yb = rb + db * th.tensor(gamma) * th.max(self.q_target(obs2b), dim=1).values
-                # Obtain Q values by selecting actions (am) individually for each row of the minibatch
+                # Obtain Q values by selecting actions (ab) individually for each row of the minibatch
                 predb = self.q(obsb)[th.arange(batch_size), ab]
                 loss = compute_loss(predb, yb)
 
@@ -202,8 +203,6 @@ def compute_loss(predictions, targets):
     error = th.abs(predictions - targets)
     loss = th.mean(th.where(error < 1, error ** 2, error))
     return loss
-
-
 
 
 
