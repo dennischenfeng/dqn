@@ -7,27 +7,30 @@ from dqn.preprocessed_atari_env import preprocess_obs_maxed_seq, create_preproce
     OBS_MAXED_SEQUENCE_LENGTH, PreprocessedAtariEnv
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def obs_maxed_seq():
     obs_maxed_seq = [np.ones(ATARI_OBS_SHAPE)] * OBS_MAXED_SEQUENCE_LENGTH
     return np.array(obs_maxed_seq)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def mock_pong_env():
     def mock_step_values():
         i = 1
-        while True:
+        for _ in range(10):
             obs2 = i * np.ones(ATARI_OBS_SHAPE)
             obs2[0, 0, 0] = -i
             rew = i * 0.11
             done = (i % 10 == 0)
-            info = {"a": 0}
+            info = {"ale.lives": 0}
             yield obs2, rew, done, info
             i += 1
 
+    # Convert to list b/c deepcopy (from determining initial_num_lives) doesn't work on generators
+    mock_step_values_list = list(mock_step_values())
+
     mock_env = mock.MagicMock(spec=gym.Env)
-    mock_env.step.side_effect = mock_step_values()
+    mock_env.step.side_effect = mock_step_values_list
     mock_env.reset.return_value = np.zeros(ATARI_OBS_SHAPE)
     mock_env.action_space = gym.spaces.discrete.Discrete(1)
     mock_env.spec.id = "PongNoFrameskip-v4"
@@ -60,7 +63,7 @@ def test_step(mock_preprocess, mock_pong_env):
     assert mock_pong_env.step.call_count == 4
     assert rew == pytest.approx(0.11 + 0.22 + 0.33 + 0.44)
     assert not done
-    assert info == {"a": 0}
+    assert info == {"ale.lives": 0}
     # took element-wise maximum correctly
     assert mod_obs[-1][0, 0, 0] == -3
     assert mod_obs[-1][0, 0, 1] == 4
@@ -69,7 +72,7 @@ def test_step(mock_preprocess, mock_pong_env):
     assert mock_pong_env.step.call_count == 8
     assert rew == pytest.approx(0.55 + 0.66 + 0.77 + 0.88)
     assert not done
-    assert info == {"a": 0}
+    assert info == {"ale.lives": 0}
     # took element-wise maximum correctly
     assert mod_obs[-1][0, 0, 0] == -7
     assert mod_obs[-1][0, 0, 1] == 8
@@ -80,7 +83,7 @@ def test_step(mock_preprocess, mock_pong_env):
     # reward is clipped at 1
     assert rew == pytest.approx(0.99 + 1.0)
     assert done
-    assert info == {"a": 0}
+    assert info == {"ale.lives": 0}
     # took element-wise maximum correctly
     assert mod_obs[-1][0, 0, 0] == -9
     assert mod_obs[-1][0, 0, 1] == 10
