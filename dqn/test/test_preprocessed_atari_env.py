@@ -88,3 +88,26 @@ def test_step(mock_preprocess, mock_pong_env):
     assert mod_obs[-1][0, 0, 0] == -9
     assert mod_obs[-1][0, 0, 1] == 10
 
+
+@mock.patch('dqn.preprocessed_atari_env.preprocess_obs_maxed_seq')
+def test_step_no_clip_reward(mock_preprocess, mock_pong_env):
+    def mock_preprocess_side_effect(obs_maxed_seq, preprocess_transform):
+        return obs_maxed_seq
+    mock_preprocess.side_effect = mock_preprocess_side_effect
+
+    env = PreprocessedAtariEnv(mock_pong_env, clip_reward=False)
+    env.reset()
+
+    mod_obs, rew, done, info = env.step(0)
+    assert mock_pong_env.step.call_count == 4
+    assert rew == pytest.approx(0.11 + 0.22 + 0.33 + 0.44)
+
+    mod_obs, rew, done, info = env.step(0)
+    assert mock_pong_env.step.call_count == 8
+    assert rew == pytest.approx(0.55 + 0.66 + 0.77 + 0.88)
+
+    # Env reaches terminal state before all action_repeat steps
+    mod_obs, rew, done, info = env.step(0)
+    assert mock_pong_env.step.call_count == 10
+    # reward is not clipped
+    assert rew == pytest.approx(0.99 + 1.1)

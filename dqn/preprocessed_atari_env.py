@@ -16,10 +16,11 @@ CROP_START_ROW = {
 
 
 class PreprocessedAtariEnv(gym.Env):
-    def __init__(self, env, action_repeat=4):
+    def __init__(self, env, action_repeat=4, clip_reward=True):
         super().__init__()
         self.env = env
         self.action_repeat = action_repeat
+        self.clip_reward = clip_reward
 
         # Need different image cropping (roughly capturing the playing area of screen) for each env
         game = env.spec.id
@@ -63,9 +64,13 @@ class PreprocessedAtariEnv(gym.Env):
             obs2, rew, done, info = self.env.step(action)
 
             obs_maxed = np.maximum(self.prev_obs, obs2)
-            # As discussed in the paper, clip step rewards at -1 and +1 to limit scale of errors (potentially better
-            # training stability), but reduces ability to differentiate actions for large/small rewards
-            total_rew += float(np.clip(rew, -1, 1))
+
+            if self.clip_reward:
+                # As discussed in the paper, clip step rewards at -1 and +1 to limit scale of errors (potentially
+                # better training stability), but reduces ability to differentiate actions for large/small rewards
+                rew = np.clip(rew, -1, 1)
+
+            total_rew += rew
 
             # Losing a life terminates an episode
             if info["ale.lives"] != self.initial_num_lives:
