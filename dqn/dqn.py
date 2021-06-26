@@ -128,6 +128,7 @@ class DQN():
                     self.q_target = deepcopy(self.q)
 
                 if self.tb_log_dir:
+                    self.writer.add_scalar("train_q_mean", predb.mean().item(), step)
                     self.writer.add_scalar("train_loss", loss.item(), step)
                     self.writer.add_scalar("epsilon", epsilon_fn(step), step)
 
