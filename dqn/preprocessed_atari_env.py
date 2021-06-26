@@ -3,6 +3,7 @@ import torch as th
 import numpy as np
 from torchvision import transforms
 from dqn.utils import SimpleCrop, annealed_epsilon
+from copy import deepcopy
 
 ATARI_OBS_SHAPE = (210, 160, 3)
 MOD_OBS_SHAPE = (4, 84, 84)
@@ -30,6 +31,7 @@ class PreprocessedAtariEnv(gym.Env):
 
         self.action_space = self.env.action_space
         self.observation_space = gym.spaces.Box(0, 255, MOD_OBS_SHAPE, dtype=np.uint8)
+        self.initial_num_lives = initial_num_lives(deepcopy(self.env))
 
     def reset(self):
         """
@@ -64,6 +66,11 @@ class PreprocessedAtariEnv(gym.Env):
             # As discussed in the paper, clip step rewards at -1 and +1 to limit scale of errors (potentially better
             # training stability), but reduces ability to differentiate actions for large/small rewards
             total_rew += float(np.clip(rew, -1, 1))
+
+            # Losing a life terminates an episode
+            if info["ale.lives"] != self.initial_num_lives:
+                done = True
+
             if done:
                 break
 
@@ -101,6 +108,14 @@ def create_preprocessing_transform(crop_start_row):
         transforms.Resize((110, 84)),
         SimpleCrop(crop_start_row, 0, 84, 84)  # TODO: confirm that Nature paper crops differently for each game
     ])
+
+
+def initial_num_lives(env):
+    env.reset()
+    action = env.action_space.sample()
+    _, _, _, info = env.step(action)
+    num_lives = info["ale.lives"]
+    return num_lives
 
 
 class ReorderedObsAtariEnv(gym.Env):
