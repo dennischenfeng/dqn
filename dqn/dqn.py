@@ -140,7 +140,6 @@ class DQN():
 
     def predict(self, obs):
         """
-        requires obs to be in batched form
 
         :param obs:
         :return:
@@ -187,8 +186,9 @@ class NatureQNetwork(nn.Module):
             nn.Linear(512, n_actions),
         )
 
-    def forward(self, x):
-        return self.fc(self.cnn(x))
+    def forward(self, obs):
+        obs_normed = normalize_image_obs(obs)
+        return self.fc(self.cnn(obs_normed))
 
 
 def compute_loss(predictions, targets):
@@ -205,4 +205,6 @@ def compute_loss(predictions, targets):
     return loss
 
 
+def normalize_image_obs(obs):
+    return obs / 255.0
 
