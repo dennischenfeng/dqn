@@ -1,12 +1,14 @@
 import gym
 import numpy as np
 from copy import deepcopy
+from typing import Optional
 import torch as th
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from dqn.replay_memory import ReplayMemory, initialize_replay_memory
 from dqn.preprocessed_atari_env import OBS_MAXED_SEQUENCE_LENGTH
 from dqn.utils import evaluate_model
+from dqn.callbacks import BaseCallback
 
 NATURE_Q_NETWORK_ALLOWED_CHANNELS = (1, 3, 4)
 
@@ -50,7 +52,8 @@ class DQN():
         optimizer_cls=th.optim.RMSprop,
         lr=1e-3,
         eval_freq=1000,
-        eval_num_episodes=10
+        eval_num_episodes=10,
+        callback: Optional[BaseCallback] = None
     ):
         """
 
@@ -64,6 +67,7 @@ class DQN():
         :param initial_replay_memory_steps:
         :param optimizer_cls:
         :param lr:
+        :param callback:
         :return:
         """
         n_steps = int(n_steps)
@@ -138,6 +142,10 @@ class DQN():
                         self.writer.add_scalar("eval_ep_rew_max", np.max(ep_rews), step)
                         self.writer.add_scalar("eval_ep_rew_min", np.min(ep_rews), step)
                         self.writer.add_scalar("eval_ep_rew_std", np.std(ep_rews), step)
+
+            # Callback
+            if callback:
+                callback.after_step(locals(), globals())
 
     def predict(self, obs):
         """
