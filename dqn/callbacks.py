@@ -3,7 +3,7 @@ Callbacks to add additional functionality at specified points in learning algori
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Dict
 import torch as th
 
 
@@ -16,7 +16,7 @@ class BaseCallback(ABC):
         super().__init__()
 
     @abstractmethod
-    def after_step(self, locals_: dict[str, Any], globals_: dict[str, Any]) -> None:
+    def after_step(self, locals_: Dict[str, Any], globals_: Dict[str, Any]) -> None:
         """
         Callback to run after each training step
 
@@ -43,7 +43,7 @@ class SaveQNetworkCallback(BaseCallback):
         self.save_dir = save_dir
         self.save_prefix = save_prefix
 
-    def after_step(self, locals_: dict[str, Any], globals_: dict[str, Any]) -> None:
+    def after_step(self, locals_: Dict[str, Any], globals_: Dict[str, Any]) -> None:
         """
         Save Q network state dict
 
