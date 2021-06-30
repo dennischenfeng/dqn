@@ -10,6 +10,7 @@ class BaseCallback(ABC):
     """
     Abstract base class for callbacks
     """
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -29,6 +30,7 @@ class SaveQNetworkCallback(BaseCallback):
     """
     Callback to save the Q network state dict of the model, after every training step
     """
+
     def __init__(self, save_dir: str, save_prefix: str):
         """
         :param save_dir: directory to save the model's state dict
