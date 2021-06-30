@@ -9,6 +9,8 @@ from dqn.dqn import DQN, NatureQNetwork, compute_loss
 from dqn.preprocessed_atari_env import PreprocessedAtariEnv, OBS_MAXED_SEQUENCE_LENGTH, MOD_OBS_SHAPE, \
     ReorderedObsAtariEnv
 from dqn.utils import evaluate_model, annealed_epsilon, basic_mlp_network
+from dqn.callbacks import SaveQNetworkCallback
+import os
 
 
 def test_nature_q_network():
@@ -111,4 +113,28 @@ def test_dqn_cartpole_env_tb(tmpdir):
         34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
         initial_replay_memory_steps=32, initial_no_op_actions_max=30
     )
+
+
+def test_dqn_cartpole_env_callback(tmpdir):
+    env = gym.make("CartPole-v1")
+    n_inputs = env.observation_space.shape[0]
+    n_actions = env.action_space.n
+    q_network = basic_mlp_network(n_inputs, n_actions)
+
+    model = DQN(env, q_network=q_network, replay_memory_size=100, tb_log_dir=tmpdir)
+
+    save_dir = str(tmpdir)
+    save_prefix = "model_q"
+    callback = SaveQNetworkCallback(save_freq=10, save_dir=save_dir, save_prefix="model_q")
+
+    model.learn(
+        34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
+        initial_replay_memory_steps=32, initial_no_op_actions_max=30, callback=callback
+    )
+
+    assert os.path.isfile(f"{save_dir}/{save_prefix}_step0")
+    assert os.path.isfile(f"{save_dir}/{save_prefix}_step10")
+    assert os.path.isfile(f"{save_dir}/{save_prefix}_step20")
+    assert os.path.isfile(f"{save_dir}/{save_prefix}_step30")
+
 

@@ -51,7 +51,7 @@ class SaveQNetworkCallback(BaseCallback):
         :param globals_:
         :return:
         """
-        step = locals_["self"].step
+        step = locals_["step"]
         if step % self.save_freq == 0:
             save_file = f"{self.save_dir}/{self.save_prefix}_step{step}"
             q = locals_["self"].q
