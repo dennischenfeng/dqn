@@ -10,7 +10,7 @@ class BaseCallback(ABC):
     """
     Abstract base class for callbacks
     """
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     @abstractmethod
@@ -32,7 +32,8 @@ class SaveQNetworkCallback(BaseCallback):
     def __init__(self, save_dir: str, save_prefix: str):
         """
         :param save_dir: directory to save the model's state dict
-        :param save_prefix: prefix for saved file name. Full name will be `f"{save_prefix}_step{step_number}"`
+        :param save_prefix: prefix for saved file name. Full name will be
+            `f"{save_prefix}_step{step_number}"`
         """
         super().__init__()
         self.save_dir = save_dir
