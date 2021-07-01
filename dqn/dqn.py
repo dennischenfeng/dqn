@@ -71,6 +71,7 @@ class DQN():
         :return:
         """
         n_steps = int(n_steps)
+        initial_replay_memory_steps = int(initial_replay_memory_steps)
         if isinstance(epsilon, (float, int)):
             def epsilon_fn(_):
                 return float(epsilon)

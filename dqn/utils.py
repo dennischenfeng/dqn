@@ -3,7 +3,7 @@ import numpy as np
 import torch as th
 import torch.nn as nn
 from torchvision import transforms
-
+import datetime
 
 class SimpleCrop(th.nn.Module):
     """
@@ -60,3 +60,7 @@ def basic_mlp_network(n_inputs, n_outputs):
         nn.Linear(64, n_outputs)
     )
     return net
+
+
+def datetime_string():
+    return (datetime.datetime.now()).strftime('%Y%m%d-%H%M%S')
