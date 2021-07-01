@@ -33,14 +33,26 @@ def test_dqn_compute_loss():
         [2.0],
         [3.0]
     ])
-
     preds = th.tensor([
         [1.1],
         [3.0],
         [13.0]
     ])
+    assert compute_loss(preds, targets, clip_loss_derivative=True) == pytest.approx(3.67)
 
-    assert compute_loss(preds, targets) == pytest.approx(3.67)
+
+def test_dqn_compute_loss_no_clip():
+    targets = th.tensor([
+        [1.0],
+        [2.0],
+        [3.0]
+    ])
+    preds = th.tensor([
+        [1.1],
+        [3.0],
+        [13.0]
+    ])
+    assert compute_loss(preds, targets, clip_loss_derivative=False) == pytest.approx(33.67)
 
 
 def mock_preprocess_obs_maxed_seq(self):

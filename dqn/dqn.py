@@ -53,7 +53,8 @@ class DQN():
         lr=1e-3,
         eval_freq=1000,
         eval_num_episodes=10,
-        callback: Optional[BaseCallback] = None
+        callback: Optional[BaseCallback] = None,
+        clip_loss_derivative: bool = False,
     ):
         """
 
@@ -122,7 +123,7 @@ class DQN():
                 yb = rb + db * th.tensor(gamma) * th.max(self.q_target(obs2b), dim=1).values
                 # Obtain Q values by selecting actions (ab) individually for each row of the minibatch
                 predb = self.q(obsb)[th.arange(batch_size), ab]
-                loss = compute_loss(predb, yb)
+                loss = compute_loss(predb, yb, clip_loss_derivative=clip_loss_derivative)
 
                 optimizer_q.zero_grad()
                 loss.backward()
@@ -201,7 +202,7 @@ class NatureQNetwork(nn.Module):
         return self.fc(self.cnn(obs_normed))
 
 
-def compute_loss(predictions, targets):
+def compute_loss(predictions, targets, clip_loss_derivative=False):
     """
     Loss function for optimizing Q. As discussed in the paper, clip the squared error's derivative at -1 and +1,
     i.e. loss = error^2 if |error| < 1 else |error|
@@ -211,7 +212,10 @@ def compute_loss(predictions, targets):
     :return:
     """
     error = th.abs(predictions - targets)
-    loss = th.mean(th.where(error < 1, error ** 2, error))
+    if clip_loss_derivative:
+        loss = th.mean(th.where(error < 1, error ** 2, error))
+    else:
+        loss = th.mean(error ** 2)
     return loss
 
 
