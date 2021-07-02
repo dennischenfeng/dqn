@@ -5,7 +5,7 @@ import torch.nn as nn
 import gym
 import mock
 from functools import partial
-from dqn.dqn import DQN, NatureQNetwork, compute_loss
+from dqn.dqn import DQN, NatureQNetwork
 from dqn.preprocessed_atari_env import PreprocessedAtariEnv, OBS_MAXED_SEQUENCE_LENGTH, MOD_OBS_SHAPE, \
     ReorderedObsAtariEnv
 from dqn.utils import evaluate_model, annealed_epsilon, basic_mlp_network
@@ -25,34 +25,6 @@ def test_nature_q_network():
                     q = NatureQNetwork(obs_space, action_space)
                     mod_obs_batch = th.ones((minibatch_size, *obs_space.shape)).float()
                     assert q(mod_obs_batch).shape == (minibatch_size, n_actions)
-
-
-def test_dqn_compute_loss():
-    targets = th.tensor([
-        [1.0],
-        [2.0],
-        [3.0]
-    ])
-    preds = th.tensor([
-        [1.1],
-        [3.0],
-        [13.0]
-    ])
-    assert compute_loss(preds, targets, clip_loss_derivative=True) == pytest.approx(3.67)
-
-
-def test_dqn_compute_loss_no_clip():
-    targets = th.tensor([
-        [1.0],
-        [2.0],
-        [3.0]
-    ])
-    preds = th.tensor([
-        [1.1],
-        [3.0],
-        [13.0]
-    ])
-    assert compute_loss(preds, targets, clip_loss_derivative=False) == pytest.approx(33.67)
 
 
 def mock_preprocess_obs_maxed_seq(self):
