@@ -35,7 +35,7 @@ class ReplayMemory():
             raise ValueError(f"Not enough samples in replay memory ({active_storage_size}) to sample minibatch_size "
                              f"({minibatch_size})")
 
-        indices = np.random.choice(range(active_storage_size), minibatch_size, replace=False)
+        indices = np.random.randint(0, active_storage_size, size=minibatch_size)
         o = self.o[indices]
         a = self.a[indices]
         r = self.r[indices]
