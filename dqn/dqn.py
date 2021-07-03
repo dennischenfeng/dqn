@@ -139,9 +139,11 @@ class DQN:
                 obsb, rb, obs2b, db = list(map(lambda x: th.tensor(x).float(), [obsb, rb, obs2b, db]))
                 ab = th.tensor(ab).long()
 
-                yb = rb + db * th.tensor(gamma) * th.max(self.q_target(obs2b), dim=1).values
-                # Obtain Q values by selecting actions (ab) individually for each row of the minibatch
-
+                # Avoid gradient calculations through q_target
+                with th.no_grad():
+                    yb = rb + db * gamma * th.max(self.q_target(obs2b), dim=1).values
+                # Select actions (ab) individually for each minibatch item. Compared to using th.gather to select
+                # actions, this indexing takes about the same computational time for backward propagation
                 predb = self.q(obsb)[th.arange(batch_size), ab]
                 # Use smooth L1 loss, as discussed in paper
                 loss = F.smooth_l1_loss(predb, yb)
