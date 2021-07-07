@@ -141,7 +141,7 @@ class DQN:
 
                 # Avoid gradient calculations through q_target
                 with th.no_grad():
-                    yb = rb + db * gamma * th.max(self.q_target(obs2b), dim=1).values
+                    yb = rb + (1 - db) * gamma * th.max(self.q_target(obs2b), dim=1).values
                 # Select actions (ab) individually for each minibatch item. Compared to using th.gather to select
                 # actions, this indexing takes about the same computational time for backward propagation
                 predb = self.q(obsb)[th.arange(batch_size), ab]
