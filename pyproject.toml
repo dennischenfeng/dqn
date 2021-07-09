@@ -23,6 +23,7 @@ pylint = "^2.8.3"
 black = "^21.6-beta.0"
 flake8 = "^3.9.2"
 isort = "^5.9.1"
+jupyterlab = "^3.0.16"
 
 [build-system]
 requires = ["poetry-core"]
