@@ -122,3 +122,6 @@ def test_dqn_cartpole_env_callback(tmpdir):
     assert os.path.isfile(f"{save_dir}/{save_prefix}_step30")
 
 
+# TODO: test dqn with optimizer kwargs
+
+# TODO: test construct_epsilon_fn

@@ -1,16 +1,17 @@
 import gym
 import numpy as np
 from copy import deepcopy
-from typing import Optional
+from typing import Optional, Dict
 import torch as th
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from dqn.replay_memory import ReplayMemory, initialize_replay_memory
 from dqn.preprocessed_atari_env import OBS_MAXED_SEQUENCE_LENGTH
-from dqn.utils import evaluate_model
+from dqn.utils import evaluate_model, annealed_epsilon
 from dqn.callbacks import BaseCallback
 from typing import Optional, Union, Callable, Any
 from torch.nn import functional as F
+from functools import partial
 
 NATURE_Q_NETWORK_ALLOWED_CHANNELS = (1, 3, 4)
 
@@ -21,10 +22,11 @@ class DQN:
     """
 
     def __init__(
-            self, env: gym.Env,
-            q_network: Optional[nn.Module] = None,
-            replay_memory_size: int = 1e6,
-            tb_log_dir: Optional[str] = None
+        self,
+        env: gym.Env,
+        q_network: Optional[nn.Module] = None,
+        replay_memory_size: int = 1e6,
+        tb_log_dir: Optional[str] = None
     ):
         """
         :param env: environment
@@ -56,52 +58,49 @@ class DQN:
     def learn(
         self,
         n_steps: int,
-        epsilon: Union[float, Callable[[int], float]],
-        gamma: float,
-        batch_size: int,
-        update_freq: int,
-        target_update_freq: int,
-        initial_replay_memory_steps: int,
-        initial_no_op_actions_max: int = 30,
-        optimizer_cls: th.optim.Optimizer = th.optim.RMSprop,
         lr: float = 1e-3,
+        epsilon: Optional[Union[int, float, Callable[[int], float]]] = None,
+        gamma: float = 0.99,
+        batch_size: int = 32,
+        update_freq: int = 4,
+        target_update_freq: int = 2500,
+        initial_replay_memory_steps: int = 50000,
+        optimizer_cls: th.optim.Optimizer = th.optim.RMSprop,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        initial_no_op_actions_max: int = 0,
         eval_freq: int = 1000,
         eval_num_episodes: int = 10,
         callback: Optional[BaseCallback] = None,
-        clip_loss_derivative: bool = False,
     ) -> None:
         """
         :param n_steps: num env steps
-        :param epsilon: float (constant epsilon) or function (epsilon is a function of num steps taken).
+        :param lr: learning rate
+        :param epsilon: float (constant epsilon) or function (epsilon is a function of num steps taken),
+            for epsilon-greedy algorithm for choosing action. If None, will choose default annealed epsilon from 1 to
+            0.1 with final annealed step of 50000.
         :param gamma: discount factor
         :param batch_size: minibatch size for network updates
         :param update_freq: update the q network every `update_freq` env steps
         :param target_update_freq: update the target network every `target_update_freq` q updates (not env steps)
         :param initial_replay_memory_steps: num random env transitions to store into replay memory, before starting
-            any network updates
+            any network updates. These initial step do not count toward the "step" count
+        :param optimizer_cls: optimizer class
+        :param optimizer_kwargs: kwargs for optimizer class. If None, will choose empty kwargs dict
         :param initial_no_op_actions_max: each episode, the first n actions will be no-operation; n is randomly
             between 0 and this number
-        :param optimizer_cls: optimizer class
-        :param lr: learning rate
-        :param eval_freq: run an evaluation (i.e. test episodes) with `eval_num_episodes` episodes.
-            Only run if using tensorboard logging
+        :param eval_freq: run an evaluation (i.e. test episodes) every `eval_freq` q updates. Only run if using
+            tensorboard logging
         :param eval_num_episodes: num episodes for evaluation. Only run if using tensorboard logging
         :param callback: callback object for running callbacks during training
-        :param clip_loss_derivative: whether to clip loss derivative at 1, as suggested in the paper
         """
-        n_steps = int(n_steps)
-        initial_replay_memory_steps = int(initial_replay_memory_steps)
-        if isinstance(epsilon, (float, int)):
-            def epsilon_fn(_):
-                return float(epsilon)
-        else:
-            assert callable(epsilon)
-            epsilon_fn = epsilon
-
+        epsilon_fn = construct_epsilon_fn(epsilon)
         initialize_replay_memory(initial_replay_memory_steps, self.env, self.replay_memory)
+        if optimizer_kwargs is None:
+            optimizer_kwargs = dict()
 
         initial_no_op_actions = np.random.randint(initial_no_op_actions_max + 1)
-        optimizer_q = optimizer_cls(self.q.parameters(), lr=lr)
+        optimizer_q = optimizer_cls(self.q.parameters(), lr=lr, **optimizer_kwargs)
+
         num_updates = 0
         ep_rew = 0
         ep_length = 0
@@ -109,7 +108,7 @@ class DQN:
 
         for step in range(n_steps):
             # Take step and store transition in replay memory
-            # TODO: initial no op actions needs to be reset every episode
+            # TODO: continue here: initial no op actions needs to be reset every episode
             if step < initial_no_op_actions:
                 a = 0
             elif np.random.random() > epsilon_fn(step):
@@ -185,6 +184,32 @@ class DQN:
             action = th.argmax(self.q(obs_t), dim=1)
             action = action.item()
         return action
+
+
+def construct_epsilon_fn(epsilon: Optional[Union[int, float, Callable[[int], float]]]) -> Callable[[int], float]:
+    """
+    Helper function for constructing epsilon function for DQN's learn method
+
+    :param epsilon: (see learn method for details)
+    :return: epsilon function
+    """
+    if epsilon is None:
+        epsilon_fn = partial(
+            annealed_epsilon, epsilon_start=1.0, epsilon_stop=0.1,
+            anneal_finished_step=50000
+        )
+    elif isinstance(epsilon, (float, int)):
+        def epsilon_fn(_):
+            return float(epsilon)
+    else:
+        if callable(epsilon):
+            epsilon_fn = epsilon
+        else:
+            raise ValueError(
+                "`epsilon` must be either a float/int or a callable that returns a float/int when given the "
+                "step_index.")
+
+    return epsilon_fn
 
 
 class NatureQNetwork(nn.Module):
