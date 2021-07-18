@@ -165,7 +165,7 @@ class DQN:
                 num_updates += 1
 
                 if num_updates % target_update_freq == 0:
-                    self.q_target = deepcopy(self.q)
+                    self.q_target = deepcopy(self.q).to(self.device)
 
                 if self.tb_log_dir:
                     self.writer.add_scalar("train_q_mean", predb.mean().item(), step)
@@ -189,7 +189,7 @@ class DQN:
         :return:
         """
         with th.no_grad():
-            obs_t = th.tensor(obs).float()
+            obs_t = th.tensor(obs).float().to(self.device)
             obs_t = obs_t.unsqueeze(0)
             action = th.argmax(self.q(obs_t), dim=1)
             action = action.item()
