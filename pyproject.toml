@@ -14,6 +14,8 @@ gym = {extras = ["atari"], version = "^0.18.3"}
 tensorboard = "^2.5.0"
 torchvision = "^0.9.1"
 matplotlib = "^3.4.2"
+optuna = "^2.8.0"
+fastprogress = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
