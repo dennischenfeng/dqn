@@ -26,7 +26,8 @@ class DQN:
         env: gym.Env,
         q_network: Optional[nn.Module] = None,
         replay_memory_size: int = 1e6,
-        tb_log_dir: Optional[str] = None
+        tb_log_dir: Optional[str] = None,
+        device: Optional[th.device] = None,
     ):
         """
         :param env: environment
@@ -34,16 +35,25 @@ class DQN:
             action_space shape
         :param replay_memory_size: total number of transitions that can be stored in replay memory
         :param tb_log_dir: tensorboard log directory path. If None, won't log diagnostics.
+        :param device: device (cpu, cuda, etc) to place tensors on
         """
         if not isinstance(env.action_space, gym.spaces.discrete.Discrete):
             raise ValueError("`Environment action space must be `Discrete`; DQN does not support otherwise.")
         self.env = env
         self.eval_env = deepcopy(env)
-        if q_network is None:
-            self.q = NatureQNetwork(env.observation_space, env.action_space)
+
+        # device
+        if device is None:
+            self.device = th.device('cuda' if th.cuda.is_available() else 'cpu')
         else:
-            self.q = q_network
-        self.q_target = deepcopy(self.q)
+            self.device = device
+
+        # q_network
+        if q_network is None:
+            self.q = NatureQNetwork(env.observation_space, env.action_space).to(self.device)
+        else:
+            self.q = q_network.to(self.device)
+        self.q_target = deepcopy(self.q).to(self.device)
 
         # Instantiate replay memory with mod_obs shape
         mod_obs = self.env.reset()
@@ -135,8 +145,8 @@ class DQN:
             # Use minibatch sampled from replay memory to take grad descent step (after completed initial steps)
             if step % update_freq == 0:
                 obsb, ab, rb, obs2b, db = self.replay_memory.sample(batch_size)  # `b` means "batch"
-                obsb, rb, obs2b, db = list(map(lambda x: th.tensor(x).float(), [obsb, rb, obs2b, db]))
-                ab = th.tensor(ab).long()
+                obsb, rb, obs2b, db = list(map(lambda x: th.tensor(x).float().to(self.device), [obsb, rb, obs2b, db]))
+                ab = th.tensor(ab).long().to(self.device)
 
                 # Avoid gradient calculations through q_target
                 with th.no_grad():
