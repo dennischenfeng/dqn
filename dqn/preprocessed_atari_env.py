@@ -113,7 +113,7 @@ def preprocess_obs_maxed_seq(obs_maxed_seq, preprocess_transform, device=None):
     result = result.permute(0, 3, 1, 2)
     result = preprocess_transform(result)
     # Squeeze out grayscale dimension (original RGB dim)
-    result = result.squeeze(1)
+    result = result.squeeze(1).to('cpu')
     return np.array(result)
 
 
