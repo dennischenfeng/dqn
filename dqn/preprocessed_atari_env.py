@@ -16,7 +16,7 @@ CROP_START_ROW = {
 
 
 class PreprocessedAtariEnv(gym.Env):
-    def __init__(self, env, action_repeat=4, clip_reward=True):
+    def __init__(self, env, action_repeat=4, clip_reward=True, device=None):
         super().__init__()
         self.env = env
         self.action_repeat = action_repeat
@@ -33,6 +33,12 @@ class PreprocessedAtariEnv(gym.Env):
         self.action_space = self.env.action_space
         self.observation_space = gym.spaces.Box(0, 255, MOD_OBS_SHAPE, dtype=np.uint8)
         self.initial_num_lives = initial_num_lives(deepcopy(self.env))
+
+        # device
+        if device is None:
+            self.device = th.device('cuda' if th.cuda.is_available() else 'cpu')
+        else:
+            self.device = device
 
     def reset(self):
         """
@@ -84,21 +90,25 @@ class PreprocessedAtariEnv(gym.Env):
 
         self.latest_obs_maxed_seq.pop(0)
         self.latest_obs_maxed_seq.append(obs_maxed)
-        mod_obs = preprocess_obs_maxed_seq(self.latest_obs_maxed_seq, self.preprocess_transform)
+        mod_obs = preprocess_obs_maxed_seq(self.latest_obs_maxed_seq, self.preprocess_transform, self.device)
         return mod_obs, total_rew, done, info
 
     def render(self, mode="human"):
         self.env.render(mode)
 
 
-def preprocess_obs_maxed_seq(obs_maxed_seq, preprocess_transform):
+def preprocess_obs_maxed_seq(obs_maxed_seq, preprocess_transform, device=None):
     assert len(obs_maxed_seq) == OBS_MAXED_SEQUENCE_LENGTH
     for a in obs_maxed_seq:
         assert a.shape == ATARI_OBS_SHAPE
 
+    # device
+    if device is None:
+        device = th.device('cuda' if th.cuda.is_available() else 'cpu')
+
     # Numpy's conversion from list of arrays to array is much faster than pytorch's conversion to tensor
     obs_maxed_seq_arr = np.array(obs_maxed_seq)
-    result = th.tensor(obs_maxed_seq_arr)
+    result = th.tensor(obs_maxed_seq_arr).to(device)
 
     result = result.permute(0, 3, 1, 2)
     result = preprocess_transform(result)
