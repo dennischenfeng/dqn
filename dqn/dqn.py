@@ -167,17 +167,16 @@ class DQN:
                 if num_updates % target_update_freq == 0:
                     self.q_target = deepcopy(self.q).to(self.device)
 
-                if self.tb_log_dir:
+                if num_updates % eval_freq == 0 and self.tb_log_dir:
                     self.writer.add_scalar("train_q_mean", predb.mean().item(), step)
                     self.writer.add_scalar("train_loss", loss.item(), step)
                     self.writer.add_scalar("epsilon", epsilon_fn(step), step)
 
-                    if num_updates % eval_freq == 0:
-                        ep_rews = evaluate_model(self, self.eval_env, num_episodes=eval_num_episodes)
-                        self.writer.add_scalar("eval_ep_rew_mean", np.mean(ep_rews), step)
-                        self.writer.add_scalar("eval_ep_rew_max", np.max(ep_rews), step)
-                        self.writer.add_scalar("eval_ep_rew_min", np.min(ep_rews), step)
-                        self.writer.add_scalar("eval_ep_rew_std", np.std(ep_rews), step)
+                    ep_rews = evaluate_model(self, self.eval_env, num_episodes=eval_num_episodes)
+                    self.writer.add_scalar("eval_ep_rew_mean", np.mean(ep_rews), step)
+                    self.writer.add_scalar("eval_ep_rew_max", np.max(ep_rews), step)
+                    self.writer.add_scalar("eval_ep_rew_min", np.min(ep_rews), step)
+                    self.writer.add_scalar("eval_ep_rew_std", np.std(ep_rews), step)
 
             # Callback
             if callback:
