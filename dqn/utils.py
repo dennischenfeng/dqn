@@ -1,31 +1,67 @@
 import warnings
-import numpy as np
 import torch as th
 import torch.nn as nn
 from torchvision import transforms
 import datetime
+from dqn.base_model import BaseModel
+import gym
+from typing import List
+
 
 class SimpleCrop(th.nn.Module):
     """
-    Crops an image (deterministically) using the TF.crop function. (No simple crop can be found in the
-    torchvision.transforms library
+    Crops an image (deterministically) using the transforms.functional.crop function. (No simple crop can be found in
+    the torchvision.transforms library
     """
-    def __init__(self, i, j, h, w):
+    def __init__(self, top: int, left: int, height: int, width: int) -> None:
+        """
+        See transforms.functional.crop for parameter descriptions
+        """
         super().__init__()
-        self.i = i
-        self.j = j
-        self.h = h
-        self.w = w
+        self.top = top
+        self.left = left
+        self.height = height
+        self.width = width
 
-    def forward(self, img):
-        return transforms.functional.crop(img, self.i, self.j, self.h, self.w)
+    def forward(self, img: th.Tensor) -> None:
+        return transforms.functional.crop(img, self.top, self.left, self.height, self.width)
 
 
-def annealed_epsilon(step, epsilon_start, epsilon_stop, anneal_finished_step):
+def annealed_epsilon(step: int, epsilon_start: float, epsilon_stop: float, anneal_finished_step: int) -> float:
+    """
+    Linear annealed epsilon. See crude ASCII diagram below for depiction of plot of epsilon vs step number.
+
+            |  .
+         e  |    .
+         p  |      .
+         s  |        .
+            |          .
+            |            . . . . . .
+            |_______________________
+                   step
+
+    :param step: current step number, to calculate corresponding epsilon value
+    :param epsilon_start: starting value for epsilon
+    :param epsilon_stop: final value for epsilon
+    :param anneal_finished_step: step at which annealing is done; the first step that corresponds to epsilon_stop
+    :return: annealed epsilon value
+    """
     return epsilon_start + (epsilon_stop - epsilon_start) * min(1, step / anneal_finished_step)
 
 
-def evaluate_model(model, env, num_episodes=10, max_steps=int(1e6)):
+def evaluate_model(
+    model: BaseModel, env: gym.Env, num_episodes: int = 10, max_steps: int = int(1e6)
+) -> List[float]:
+    """
+    Evaluate model by rolling out episodes in the env and reporting the episode rewards (returns).
+
+    :param model: model to run
+    :param env: environment to run rollouts in
+    :param num_episodes: number of episode rollouts to run in env
+    :param max_steps: max number of steps for each rollout. If exceeded, then will terminate and return the episode
+        reward up to that point
+    :return: list of episode rewards (returns)
+    """
     with th.no_grad():
         ep_rews = []
         obs = env.reset()
@@ -43,13 +79,21 @@ def evaluate_model(model, env, num_episodes=10, max_steps=int(1e6)):
             ep_rews.append(ep_rew)
 
             if not done:
+                obs = env.reset()
                 warnings.warn(f"While evaluating the model, reached max_steps ({max_steps}) before reaching terminal "
                               f"state in env. Terminating it at max_steps.")
 
     return ep_rews
 
 
-def basic_mlp_network(n_inputs, n_outputs):
+def basic_mlp_network(n_inputs: int, n_outputs: int) -> nn.Module:
+    """
+    Builds a basic MLP NN with 3 fully connected hidden layers of 64 hidden units each
+
+    :param n_inputs: number of input units
+    :param n_outputs: number of output units
+    :return: the constructed neural net
+    """
     net = nn.Sequential(
         nn.Linear(n_inputs, 64),
         nn.ReLU(),
@@ -62,5 +106,8 @@ def basic_mlp_network(n_inputs, n_outputs):
     return net
 
 
-def datetime_string():
+def datetime_string() -> str:
+    """
+    :return: formatted datetime, as a string
+    """
     return (datetime.datetime.now()).strftime('%Y%m%d-%H%M%S')

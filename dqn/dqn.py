@@ -12,11 +12,13 @@ from dqn.callbacks import BaseCallback
 from typing import Optional, Union, Callable, Any
 from torch.nn import functional as F
 from functools import partial
+from dqn.base_model import BaseModel
+
 
 NATURE_Q_NETWORK_ALLOWED_CHANNELS = (1, 3, 4)
 
 
-class DQN:
+class DQN(BaseModel):
     """
     A working implementation that reproduces DQN for Atari, based entirely from the original Nature paper
     """
