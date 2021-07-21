@@ -52,7 +52,7 @@ def test_reset(mock_pong_env):
 
 @mock.patch('dqn.preprocessed_atari_env.preprocess_obs_maxed_seq')
 def test_step(mock_preprocess, mock_pong_env):
-    def mock_preprocess_side_effect(obs_maxed_seq, preprocess_transform):
+    def mock_preprocess_side_effect(obs_maxed_seq, preprocess_transform, device=None):
         return obs_maxed_seq
     mock_preprocess.side_effect = mock_preprocess_side_effect
 
@@ -91,7 +91,7 @@ def test_step(mock_preprocess, mock_pong_env):
 
 @mock.patch('dqn.preprocessed_atari_env.preprocess_obs_maxed_seq')
 def test_step_no_clip_reward(mock_preprocess, mock_pong_env):
-    def mock_preprocess_side_effect(obs_maxed_seq, preprocess_transform):
+    def mock_preprocess_side_effect(obs_maxed_seq, preprocess_transform, device=None):
         return obs_maxed_seq
     mock_preprocess.side_effect = mock_preprocess_side_effect
 
