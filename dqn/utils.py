@@ -1,11 +1,13 @@
+import datetime
 import warnings
+from typing import List
+
+import gym
 import torch as th
 import torch.nn as nn
 from torchvision import transforms
-import datetime
+
 from dqn.base_model import BaseModel
-import gym
-from typing import List
 
 
 class SimpleCrop(th.nn.Module):
