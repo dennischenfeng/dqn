@@ -1,10 +1,14 @@
+"""
+Misc. utility functions for rest of package
+"""
+
 import datetime
 import warnings
 from typing import List
 
 import gym
 import torch as th
-import torch.nn as nn
+from torch import nn
 from torchvision import transforms
 
 from dqn.base_model import BaseModel
@@ -27,6 +31,11 @@ class SimpleCrop(th.nn.Module):
         self.width = width
 
     def forward(self, img: th.Tensor) -> None:
+        """
+        Forward pass for input img
+
+        :param img: image tensor
+        """
         return transforms.functional.crop(img, self.top, self.left, self.height, self.width)
 
 
@@ -69,9 +78,9 @@ def evaluate_model(model: BaseModel, env: gym.Env, num_episodes: int = 10, max_s
         for _ in range(num_episodes):
             ep_rew = 0
             done = False
-            for step in range(max_steps):
+            for _ in range(max_steps):
                 action = model.predict(obs)
-                obs, reward, done, info = env.step(action)
+                obs, reward, done, _ = env.step(action)
                 ep_rew += reward
                 if done:
                     obs = env.reset()

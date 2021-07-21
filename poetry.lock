@@ -471,6 +471,17 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
+name = "importlab"
+version = "0.6.1"
+description = "A library to calculate python dependency graphs."
+category = "dev"
+optional = false
+python-versions = ">=3.6.0"
+
+[package.dependencies]
+networkx = ">=2"
+
+[[package]]
 name = "importlib-metadata"
 version = "3.10.1"
 description = "Read metadata from Python packages"
@@ -967,6 +978,41 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "networkx"
+version = "2.5"
+description = "Python package for creating and manipulating graphs and networks"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+decorator = ">=4.3.0"
+
+[package.extras]
+all = ["numpy", "scipy", "pandas", "matplotlib", "pygraphviz", "pydot", "pyyaml", "lxml", "pytest"]
+gdal = ["gdal"]
+lxml = ["lxml"]
+matplotlib = ["matplotlib"]
+numpy = ["numpy"]
+pandas = ["pandas"]
+pydot = ["pydot"]
+pygraphviz = ["pygraphviz"]
+pytest = ["pytest"]
+pyyaml = ["pyyaml"]
+scipy = ["scipy"]
+
+[[package]]
+name = "ninja"
+version = "1.10.0.post3"
+description = "Ninja is a small build system with a focus on speed"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.extras]
+test = ["codecov (>=2.0.5)", "coverage (>=4.2)", "flake8 (>=3.0.4)", "pytest (>=4.5.0)", "pytest-cov (>=2.7.1)", "pytest-runner (>=5.1)", "pytest-virtualenv (>=1.7.0)", "virtualenv (>=15.0.3)"]
+
+[[package]]
 name = "notebook"
 version = "6.4.0"
 description = "A web-based notebook environment for interactive computing"
@@ -1353,6 +1399,23 @@ description = "Programmatically open an editor, capture the result."
 category = "main"
 optional = false
 python-versions = "*"
+
+[[package]]
+name = "pytype"
+version = "2021.7.19"
+description = "Python type inferencer"
+category = "dev"
+optional = false
+python-versions = "<3.10,>=3.6"
+
+[package.dependencies]
+attrs = ">=21.2.0"
+importlab = ">=0.6.1"
+ninja = ">=1.10.0.post2"
+pyyaml = ">=3.11"
+six = "*"
+toml = "*"
+typed_ast = ">=1.4.3"
 
 [[package]]
 name = "pytz"
@@ -1795,8 +1858,8 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.7"
-content-hash = "0b164a85bac52519c92d78f1ffae81007be9d868f7bc5ebbffcf96e0dffb8ff4"
+python-versions = "^3.7, <3.10"
+content-hash = "26b541f3072037a68157e66339329b9f2eda5d5920326f53d4cd2e48b3fd07dd"
 
 [metadata.files]
 absl-py = [
@@ -2186,6 +2249,9 @@ idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
     {file = "idna-2.10.tar.gz", hash = "sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6"},
 ]
+importlab = [
+    {file = "importlab-0.6.1.tar.gz", hash = "sha256:056503329df1ba8f6291a4b548042aa18620ad91d39388ba58044f0fd44ff83e"},
+]
 importlib-metadata = [
     {file = "importlib_metadata-3.10.1-py3-none-any.whl", hash = "sha256:2ec0faae539743ae6aaa84b49a169670a465f7f5d64e6add98388cc29fd1f2f6"},
     {file = "importlib_metadata-3.10.1.tar.gz", hash = "sha256:c9356b657de65c53744046fa8f7358afe0714a1af7d570c00c3835c2d724a7c1"},
@@ -2437,6 +2503,21 @@ nbformat = [
 nest-asyncio = [
     {file = "nest_asyncio-1.5.1-py3-none-any.whl", hash = "sha256:76d6e972265063fe92a90b9cc4fb82616e07d586b346ed9d2c89a4187acea39c"},
     {file = "nest_asyncio-1.5.1.tar.gz", hash = "sha256:afc5a1c515210a23c461932765691ad39e8eba6551c055ac8d5546e69250d0aa"},
+]
+networkx = [
+    {file = "networkx-2.5-py3-none-any.whl", hash = "sha256:8c5812e9f798d37c50570d15c4a69d5710a18d77bafc903ee9c5fba7454c616c"},
+    {file = "networkx-2.5.tar.gz", hash = "sha256:7978955423fbc9639c10498878be59caf99b44dc304c2286162fd24b458c1602"},
+]
+ninja = [
+    {file = "ninja-1.10.0.post3-py2.py3-none-macosx_10_9_x86_64.whl", hash = "sha256:9b571ec9501b578668a6ad70dd0d841deb16607cf5b8936a43069de36c9650f6"},
+    {file = "ninja-1.10.0.post3-py2.py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6a2a0b3c29bcd276464677162947a2b75b0dba5aa518f8fd287b47e4861f1adf"},
+    {file = "ninja-1.10.0.post3-py2.py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:a2d36f997bed67b596e818a9421828fa40ed638ba548565bab68a958dbd14247"},
+    {file = "ninja-1.10.0.post3-py2.py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:bf02773504f793a11738670939a755df57884acdb6a1091adf4c619a9acf3bef"},
+    {file = "ninja-1.10.0.post3-py2.py3-none-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:2199dd10e046182fa288424344fddd6f09a6446c494abeafd6daeb8202839baf"},
+    {file = "ninja-1.10.0.post3-py2.py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:0a00849cbc75c916cde35c345ca392109721d05753080b00ee7d2f58d028e169"},
+    {file = "ninja-1.10.0.post3-py2.py3-none-win32.whl", hash = "sha256:c6a9dab4dc404326f3b8e31d0200c890e342247e106441708aed907d8f96f5d7"},
+    {file = "ninja-1.10.0.post3-py2.py3-none-win_amd64.whl", hash = "sha256:c3d68c3de771d37b7511dda5c81030c24fdf95763309e61812eb79208b679179"},
+    {file = "ninja-1.10.0.post3.tar.gz", hash = "sha256:8d328888b5bff8a4adc88c4f84e074e31d0b4195459395f8f3c47b07e5d3c0f9"},
 ]
 notebook = [
     {file = "notebook-6.4.0-py3-none-any.whl", hash = "sha256:f7f0a71a999c7967d9418272ae4c3378a220bd28330fbfb49860e46cf8a5838a"},
@@ -2699,6 +2780,17 @@ python-editor = [
     {file = "python_editor-1.0.4-py2.7.egg", hash = "sha256:ea87e17f6ec459e780e4221f295411462e0d0810858e055fc514684350a2f522"},
     {file = "python_editor-1.0.4-py3-none-any.whl", hash = "sha256:1bf6e860a8ad52a14c3ee1252d5dc25b2030618ed80c022598f00176adc8367d"},
     {file = "python_editor-1.0.4-py3.5.egg", hash = "sha256:c3da2053dbab6b29c94e43c486ff67206eafbe7eb52dbec7390b5e2fb05aac77"},
+]
+pytype = [
+    {file = "pytype-2021.7.19-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:dcb525177f762869e6c992a03b0eb9a5941b9e255630ee6f8c6ca3b73d9f8a2e"},
+    {file = "pytype-2021.7.19-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f40211fe4ea470a12041c00afa371064e81baae5a999ad2ab4808730021e6583"},
+    {file = "pytype-2021.7.19-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:61825939f9ad4ba4909e69ff37f9092d526b94a0419c21a770cd2a240c32de97"},
+    {file = "pytype-2021.7.19-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0cf6102c00d62d2503c67ff30bbf0152df1a32f22ad1b573a0e6caf6817420a0"},
+    {file = "pytype-2021.7.19-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:dcb12db21b2b3183d8552114333675a2fad3b7eeb76bb07662833a83fb1f70d0"},
+    {file = "pytype-2021.7.19-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:74e0f027c2cc0382ec04342cb5f5860453d0163358bbcc8489684334fd457ba4"},
+    {file = "pytype-2021.7.19-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:fed3b6fc4ed2948980f3ed6e73b9bf0e58b47c1672c465740b4894da1dfb4be1"},
+    {file = "pytype-2021.7.19-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f0b4605d07547ce8a0ec74d26951ee6d3c24a4c3010dddb73a0502a110a703a5"},
+    {file = "pytype-2021.7.19.tar.gz", hash = "sha256:8dba4e42defd145cd6a933f3673304a2e8aaa319ce9842fbf0eea670e4f3e89f"},
 ]
 pytz = [
     {file = "pytz-2021.1-py2.py3-none-any.whl", hash = "sha256:eb10ce3e7736052ed3623d49975ce333bcd712c7bb19a58b9e2089d4057d0798"},
