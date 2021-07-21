@@ -13,6 +13,7 @@ class SimpleCrop(th.nn.Module):
     Crops an image (deterministically) using the transforms.functional.crop function. (No simple crop can be found in
     the torchvision.transforms library
     """
+
     def __init__(self, top: int, left: int, height: int, width: int) -> None:
         """
         See transforms.functional.crop for parameter descriptions
@@ -49,9 +50,7 @@ def annealed_epsilon(step: int, epsilon_start: float, epsilon_stop: float, annea
     return epsilon_start + (epsilon_stop - epsilon_start) * min(1, step / anneal_finished_step)
 
 
-def evaluate_model(
-    model: BaseModel, env: gym.Env, num_episodes: int = 10, max_steps: int = int(1e6)
-) -> List[float]:
+def evaluate_model(model: BaseModel, env: gym.Env, num_episodes: int = 10, max_steps: int = int(1e6)) -> List[float]:
     """
     Evaluate model by rolling out episodes in the env and reporting the episode rewards (returns).
 
@@ -80,15 +79,17 @@ def evaluate_model(
 
             if not done:
                 obs = env.reset()
-                warnings.warn(f"While evaluating the model, reached max_steps ({max_steps}) before reaching terminal "
-                              f"state in env. Terminating it at max_steps.")
+                warnings.warn(
+                    f"While evaluating the model, reached max_steps ({max_steps}) before reaching terminal "
+                    f"state in env. Terminating it at max_steps."
+                )
 
     return ep_rews
 
 
 def basic_mlp_network(n_inputs: int, n_outputs: int) -> nn.Module:
     """
-    Builds a basic MLP NN with 3 fully connected hidden layers of 64 hidden units each
+    Builds a basic MLP NN with 3 fully connected hidden layers of 64 hidden units each.
 
     :param n_inputs: number of input units
     :param n_outputs: number of output units
@@ -101,7 +102,7 @@ def basic_mlp_network(n_inputs: int, n_outputs: int) -> nn.Module:
         nn.ReLU(),
         nn.Linear(64, 64),
         nn.ReLU(),
-        nn.Linear(64, n_outputs)
+        nn.Linear(64, n_outputs),
     )
     return net
 
@@ -110,4 +111,4 @@ def datetime_string() -> str:
     """
     :return: formatted datetime, as a string
     """
-    return (datetime.datetime.now()).strftime('%Y%m%d-%H%M%S')
+    return (datetime.datetime.now()).strftime("%Y%m%d-%H%M%S")
