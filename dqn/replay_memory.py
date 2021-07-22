@@ -2,9 +2,10 @@
 Replay memory used to store transition data.
 """
 
-import numpy as np
 from typing import Tuple
+
 import gym
+import numpy as np
 
 
 class ReplayMemory:
@@ -53,8 +54,10 @@ class ReplayMemory:
         """
         active_storage_size = min(self.num_stores, self.n)
         if batch_size > active_storage_size:
-            raise ValueError(f"Not enough samples in replay memory ({active_storage_size}) to sample minibatch_size "
-                             f"({batch_size})")
+            raise ValueError(
+                f"Not enough samples in replay memory ({active_storage_size}) to sample minibatch_size "
+                f"({batch_size})"
+            )
 
         indices = np.random.randint(0, active_storage_size, size=batch_size)
         o = self.o[indices]
