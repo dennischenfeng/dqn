@@ -10,6 +10,7 @@ class BaseModel(ABC):
     """
     Base model for RL algorithm
     """
+
     def __init__(self):
         super().__init__()
 
