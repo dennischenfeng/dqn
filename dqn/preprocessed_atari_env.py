@@ -2,22 +2,21 @@
 Wrapper around Atari gym envs to preprocess the observations (resizing, cropping, action repeat, etc)
 """
 
-import gym
-import torch as th
-import numpy as np
-from torchvision import transforms
-from dqn.utils import SimpleCrop
 from copy import deepcopy
-from typing import Tuple, Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional, Tuple
+
+import gym
+import numpy as np
+import torch as th
+from torchvision import transforms
+
+from dqn.utils import SimpleCrop
 
 ATARI_OBS_SHAPE = (210, 160, 3)
 OBS_SEQUENCE_LENGTH = 4  # number of env observations (i.e. frames) to count as one "preprocessed obs" for RL algo
 MOD_OBS_SHAPE = (OBS_SEQUENCE_LENGTH, 84, 84)
 # Need different image cropping (roughly capturing the playing area of screen) for each env; starting row for crop
-CROP_START_ROW = {
-    "PongNoFrameskip-v4": 18,
-    "BreakoutNoFrameskip-v4": 18
-}
+CROP_START_ROW = {"PongNoFrameskip-v4": 18, "BreakoutNoFrameskip-v4": 18}
 
 
 class PreprocessedAtariEnv(gym.Env):
@@ -45,7 +44,7 @@ class PreprocessedAtariEnv(gym.Env):
             raise ValueError("`action_repeat` must be >= 1.")
 
         if device is None:
-            self.device = th.device('cuda' if th.cuda.is_available() else 'cpu')
+            self.device = th.device("cuda" if th.cuda.is_available() else "cpu")
         else:
             self.device = device
 
@@ -146,7 +145,7 @@ def preprocess_obs_maxed_seq(
             raise ValueError("Items in `obs_maxed_seq` must have shape of `ATARI_OBS_SHAPE`.")
 
     if device is None:
-        device = th.device('cuda' if th.cuda.is_available() else 'cpu')
+        device = th.device("cuda" if th.cuda.is_available() else "cpu")
 
     # Numpy's conversion from list of arrays to array is faster than pytorch's conversion to tensor
     obs_maxed_seq_arr = np.array(obs_maxed_seq)
@@ -166,11 +165,9 @@ def create_preprocessing_transform(crop_start_row: int) -> Any:
     :param crop_start_row: starting (top-most) row for crop
     :return: preprocessing transform
     """
-    return transforms.Compose([
-        transforms.Grayscale(),
-        transforms.Resize((110, 84)),
-        SimpleCrop(crop_start_row, 0, 84, 84)
-    ])
+    return transforms.Compose(
+        [transforms.Grayscale(), transforms.Resize((110, 84)), SimpleCrop(crop_start_row, 0, 84, 84)]
+    )
 
 
 def initial_num_lives(env: gym.Env) -> int:
@@ -205,7 +202,7 @@ class ReorderedObsAtariEnv(gym.Env):
         self.new_ordering = new_ordering
 
         orig_obs_shape = self.env.observation_space.shape
-        mod_obs_shape = tuple(np.array(orig_obs_shape)[self.new_ordering, ])
+        mod_obs_shape = tuple(np.array(orig_obs_shape)[(self.new_ordering,)])
 
         self.action_space = self.env.action_space
         self.observation_space = gym.spaces.Box(0, 255, mod_obs_shape, dtype=np.uint8)
@@ -243,4 +240,5 @@ class EnvOperationError(Exception):
     """
     Exception for when user tries to do an env operation that's not allowed, like step without having reset the env
     """
+
     pass
