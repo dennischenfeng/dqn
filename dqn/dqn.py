@@ -6,7 +6,7 @@ import torch as th
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from dqn.replay_memory import ReplayMemory, initialize_replay_memory
-from dqn.preprocessed_atari_env import OBS_MAXED_SEQUENCE_LENGTH
+from dqn.preprocessed_atari_env import OBS_SEQUENCE_LENGTH
 from dqn.utils import evaluate_model, annealed_epsilon
 from dqn.callbacks import BaseCallback
 from typing import Optional, Union, Callable, Any
