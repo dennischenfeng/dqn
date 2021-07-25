@@ -16,7 +16,9 @@ ATARI_OBS_SHAPE = (210, 160, 3)
 OBS_SEQUENCE_LENGTH = 4  # number of env observations (i.e. frames) to count as one "preprocessed obs" for RL algo
 MOD_OBS_SHAPE = (OBS_SEQUENCE_LENGTH, 84, 84)
 # Need different image cropping (roughly capturing the playing area of screen) for each env; starting row for crop
-CROP_START_ROW = {"PongNoFrameskip-v4": 18, "BreakoutNoFrameskip-v4": 18}
+CROP_START_ROW = {
+    "PongNoFrameskip-v4": 18, "BreakoutNoFrameskip-v4": 18, "BoxingNoFrameskip-v4": 15, "FreewayNoFrameskip-v4": 15
+}
 
 
 class PreprocessedAtariEnv(gym.Env):
