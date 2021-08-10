@@ -2,9 +2,9 @@
 Test replay_memory module
 """
 
-import pytest
-import numpy as np
 import gym
+import numpy as np
+import pytest
 from dqn.replay_memory import ReplayMemory, initialize_replay_memory
 
 

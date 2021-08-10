@@ -2,15 +2,16 @@
 Test dqn module
 """
 
+import os
+from functools import partial
+
+import gym
 import numpy as np
 import torch as th
-import gym
-from functools import partial
+from dqn.callbacks import SaveQNetworkCallback
 from dqn.dqn import DQN, NatureQNetwork
 from dqn.preprocessed_atari_env import PreprocessedAtariEnv, ReorderedObsAtariEnv
 from dqn.utils import annealed_epsilon, basic_mlp_network
-from dqn.callbacks import SaveQNetworkCallback
-import os
 
 
 def test_nature_q_network():
@@ -33,8 +34,15 @@ def test_dqn():
     model = DQN(env, replay_memory_size=100)
 
     model.learn(
-        34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
-        initial_replay_memory_steps=32, initial_no_op_actions_max=30
+        34,
+        epsilon=0.1,
+        gamma=0.99,
+        batch_size=32,
+        update_freq=4,
+        target_update_freq=10,
+        lr=1e-3,
+        initial_replay_memory_steps=32,
+        initial_no_op_actions_max=30,
     )
 
 
@@ -47,8 +55,15 @@ def test_dqn_annealed_epsilon():
     epsilon_fn = partial(annealed_epsilon, epsilon_start=1, epsilon_stop=0.1, anneal_finished_step=30)
 
     model.learn(
-        steps, epsilon=epsilon_fn, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
-        initial_replay_memory_steps=32, initial_no_op_actions_max=30
+        steps,
+        epsilon=epsilon_fn,
+        gamma=0.99,
+        batch_size=32,
+        update_freq=4,
+        target_update_freq=10,
+        lr=1e-3,
+        initial_replay_memory_steps=32,
+        initial_no_op_actions_max=30,
     )
 
 
@@ -58,8 +73,15 @@ def test_dqn_orig_pong_env():
     model = DQN(env, replay_memory_size=100)
 
     model.learn(
-        34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
-        initial_replay_memory_steps=32, initial_no_op_actions_max=30
+        34,
+        epsilon=0.1,
+        gamma=0.99,
+        batch_size=32,
+        update_freq=4,
+        target_update_freq=10,
+        lr=1e-3,
+        initial_replay_memory_steps=32,
+        initial_no_op_actions_max=30,
     )
 
 
@@ -72,8 +94,15 @@ def test_dqn_cartpole_env():
     model = DQN(env, q_network=q_network, replay_memory_size=100)
 
     model.learn(
-        34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
-        initial_replay_memory_steps=32, initial_no_op_actions_max=30
+        34,
+        epsilon=0.1,
+        gamma=0.99,
+        batch_size=32,
+        update_freq=4,
+        target_update_freq=10,
+        lr=1e-3,
+        initial_replay_memory_steps=32,
+        initial_no_op_actions_max=30,
     )
 
 
@@ -86,8 +115,15 @@ def test_dqn_cartpole_env_with_tensorboard(tmpdir):
     model = DQN(env, q_network=q_network, replay_memory_size=100, tb_log_dir=str(tmpdir))
 
     model.learn(
-        34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
-        initial_replay_memory_steps=32, initial_no_op_actions_max=30
+        34,
+        epsilon=0.1,
+        gamma=0.99,
+        batch_size=32,
+        update_freq=4,
+        target_update_freq=10,
+        lr=1e-3,
+        initial_replay_memory_steps=32,
+        initial_no_op_actions_max=30,
     )
 
 
@@ -104,8 +140,16 @@ def test_dqn_cartpole_env_with_callback(tmpdir):
     callback = SaveQNetworkCallback(save_freq=10, save_dir=save_dir, save_prefix="model_q")
 
     model.learn(
-        34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
-        initial_replay_memory_steps=32, initial_no_op_actions_max=30, callback=callback
+        34,
+        epsilon=0.1,
+        gamma=0.99,
+        batch_size=32,
+        update_freq=4,
+        target_update_freq=10,
+        lr=1e-3,
+        initial_replay_memory_steps=32,
+        initial_no_op_actions_max=30,
+        callback=callback,
     )
 
     assert os.path.isfile(f"{save_dir}/{save_prefix}_step0")

@@ -2,11 +2,11 @@
 Test utils module
 """
 
-import pytest
 import gym
+import pytest
 import torch as th
-from dqn.utils import SimpleCrop, annealed_epsilon, evaluate_model, basic_mlp_network
 from dqn.dqn import DQN
+from dqn.utils import SimpleCrop, annealed_epsilon, basic_mlp_network, evaluate_model
 
 
 def test_simple_crop():
@@ -17,11 +17,7 @@ def test_simple_crop():
     c = SimpleCrop(1, 2, 3, 4)
     cropped_img = c(img)
 
-    expected = th.tensor([[
-        [2, 3, 4, 5],
-        [2, 3, 4, 5],
-        [2, 3, 4, 5]
-    ]])
+    expected = th.tensor([[[2, 3, 4, 5], [2, 3, 4, 5], [2, 3, 4, 5]]])
     expected = expected.float()
 
     assert (expected == cropped_img).all().item()

@@ -3,11 +3,16 @@ Test preprocessed_atari_env module
 """
 
 import gym
-import pytest
-import numpy as np
 import mock
-from dqn.preprocessed_atari_env import preprocess_obs_maxed_seq, create_preprocessing_transform, ATARI_OBS_SHAPE, \
-    OBS_SEQUENCE_LENGTH, PreprocessedAtariEnv
+import numpy as np
+import pytest
+from dqn.preprocessed_atari_env import (
+    ATARI_OBS_SHAPE,
+    OBS_SEQUENCE_LENGTH,
+    PreprocessedAtariEnv,
+    create_preprocessing_transform,
+    preprocess_obs_maxed_seq,
+)
 
 
 @pytest.fixture(scope="function")
@@ -24,7 +29,7 @@ def mock_pong_env():
             obs2 = i * np.ones(ATARI_OBS_SHAPE)
             obs2[0, 0, 0] = -i
             rew = i * 0.11
-            done = (i % 10 == 0)
+            done = i % 10 == 0
             info = {"ale.lives": 0}
             yield obs2, rew, done, info
             i += 1
@@ -53,10 +58,11 @@ def test_reset(mock_pong_env):
     assert (np.array(mod_obs) == np.zeros((4, 84, 84))).all()
 
 
-@mock.patch('dqn.preprocessed_atari_env.preprocess_obs_maxed_seq')
+@mock.patch("dqn.preprocessed_atari_env.preprocess_obs_maxed_seq")
 def test_step(mock_preprocess, mock_pong_env):
     def mock_preprocess_side_effect(obs_maxed_seq, preprocess_transform, device=None):
         return obs_maxed_seq
+
     mock_preprocess.side_effect = mock_preprocess_side_effect
 
     env = PreprocessedAtariEnv(mock_pong_env, clip_reward=True)
@@ -92,10 +98,11 @@ def test_step(mock_preprocess, mock_pong_env):
     assert mod_obs[-1][0, 0, 1] == 10
 
 
-@mock.patch('dqn.preprocessed_atari_env.preprocess_obs_maxed_seq')
+@mock.patch("dqn.preprocessed_atari_env.preprocess_obs_maxed_seq")
 def test_step_no_clip_reward(mock_preprocess, mock_pong_env):
     def mock_preprocess_side_effect(obs_maxed_seq, preprocess_transform, device=None):
         return obs_maxed_seq
+
     mock_preprocess.side_effect = mock_preprocess_side_effect
 
     env = PreprocessedAtariEnv(mock_pong_env, clip_reward=False)
