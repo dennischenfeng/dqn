@@ -48,7 +48,9 @@ class ReplayMemory:
 
     def sample(
         self, batch_size
-    ) -> Tuple[np.ndarray[np.ndarray], np.ndarray[int], np.ndarray[float], np.ndarray[np.ndarray], np.ndarray[bool]]:
+    ) -> Tuple[
+        "np.ndarray[np.ndarray]", "np.ndarray[int]", "np.ndarray[float]", "np.ndarray[np.ndarray]", "np.ndarray[bool]"
+    ]:
         """
         Sample a random minibatch of transitions (sampling with replacement)
 
