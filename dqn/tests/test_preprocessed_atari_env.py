@@ -4,12 +4,12 @@ import numpy as np
 from torchvision import transforms
 import mock
 from dqn.preprocessed_atari_env import preprocess_obs_maxed_seq, create_preprocessing_transform, ATARI_OBS_SHAPE, \
-    OBS_MAXED_SEQUENCE_LENGTH, PreprocessedAtariEnv
+    OBS_SEQUENCE_LENGTH, PreprocessedAtariEnv
 
 
 @pytest.fixture(scope="function")
 def obs_maxed_seq():
-    obs_maxed_seq = [np.ones(ATARI_OBS_SHAPE)] * OBS_MAXED_SEQUENCE_LENGTH
+    obs_maxed_seq = [np.ones(ATARI_OBS_SHAPE)] * OBS_SEQUENCE_LENGTH
     return np.array(obs_maxed_seq)
 
 
@@ -56,7 +56,7 @@ def test_step(mock_preprocess, mock_pong_env):
         return obs_maxed_seq
     mock_preprocess.side_effect = mock_preprocess_side_effect
 
-    env = PreprocessedAtariEnv(mock_pong_env)
+    env = PreprocessedAtariEnv(mock_pong_env, clip_reward=True)
     env.reset()
 
     mod_obs, rew, done, info = env.step(0)

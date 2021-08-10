@@ -6,7 +6,7 @@ import gym
 import mock
 from functools import partial
 from dqn.dqn import DQN, NatureQNetwork
-from dqn.preprocessed_atari_env import PreprocessedAtariEnv, OBS_MAXED_SEQUENCE_LENGTH, MOD_OBS_SHAPE, \
+from dqn.preprocessed_atari_env import PreprocessedAtariEnv, OBS_SEQUENCE_LENGTH, MOD_OBS_SHAPE, \
     ReorderedObsAtariEnv
 from dqn.utils import evaluate_model, annealed_epsilon, basic_mlp_network
 from dqn.callbacks import SaveQNetworkCallback
