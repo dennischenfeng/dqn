@@ -19,6 +19,7 @@ MOD_OBS_SHAPE = (OBS_SEQUENCE_LENGTH, 84, 84)
 CROP_START_ROW = {
     "PongNoFrameskip-v4": 18, "BreakoutNoFrameskip-v4": 18, "BoxingNoFrameskip-v4": 15, "FreewayNoFrameskip-v4": 15
 }
+NO_OP_ACTION = 0
 
 
 class PreprocessedAtariEnv(gym.Env):

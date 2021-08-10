@@ -15,14 +15,7 @@ class BaseModel(ABC):
         super().__init__()
 
     @abstractmethod
-    def learn(self, *args, **kwargs) -> Any:
-        """
-        Train the model
-        """
-        pass
-
-    @abstractmethod
-    def predict(self, *args, **kwargs) -> Any:
+    def predict(self, obs):
         """
         Use the model to predict an action
         """
