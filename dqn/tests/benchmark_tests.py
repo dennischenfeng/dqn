@@ -3,15 +3,16 @@ Benchmarking DQN against simple environments. Run this file as a script (`python
 diagnostic data continuously to tensorboard (`tb_logs` directory).
 """
 
+from functools import partial
+from typing import Any, Dict, Tuple
+
+import gym
+import numpy as np
+import torch as th
 from dqn.dqn import DQN
 from dqn.tests import TESTS_DIR
-import gym
-from torch import nn
-import torch as th
-from functools import partial
 from dqn.utils import annealed_epsilon, datetime_string
-import numpy as np
-from typing import Any, Dict, Tuple
+from torch import nn
 
 
 def benchmark_against_cartpole() -> None:
@@ -26,18 +27,16 @@ def benchmark_against_cartpole() -> None:
     learn_steps = int(3e6)
     for trial in range(10):
         q_network = nn.Sequential(
-            nn.Linear(n_inputs, 64),
-            nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
-            nn.Linear(64, n_actions)
+            nn.Linear(n_inputs, 64), nn.ReLU(), nn.Linear(64, 64), nn.ReLU(), nn.Linear(64, n_actions)
         )
 
         dt = datetime_string()
 
         model = DQN(
-            env, replay_memory_size=int(500e3), q_network=q_network,
-            tb_log_dir=f"{TESTS_DIR}/tb_logs/{dt}_benchmark_cartpole_trial{trial}"
+            env,
+            replay_memory_size=int(500e3),
+            q_network=q_network,
+            tb_log_dir=f"{TESTS_DIR}/tb_logs/{dt}_benchmark_cartpole_trial{trial}",
         )
         epsilon_fn = partial(
             annealed_epsilon,
@@ -77,18 +76,16 @@ def benchmark_against_frozenlake() -> None:
     learn_steps = int(3e6)
     for trial in range(10):
         q_network = nn.Sequential(
-            nn.Linear(n_inputs, 64),
-            nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
-            nn.Linear(64, n_actions)
+            nn.Linear(n_inputs, 64), nn.ReLU(), nn.Linear(64, 64), nn.ReLU(), nn.Linear(64, n_actions)
         )
 
         dt = datetime_string()
 
         model = DQN(
-            env, replay_memory_size=int(500e3), q_network=q_network,
-            tb_log_dir=f"{TESTS_DIR}/tb_logs/{dt}_benchmark_frozenlake_trial{trial}"
+            env,
+            replay_memory_size=int(500e3),
+            q_network=q_network,
+            tb_log_dir=f"{TESTS_DIR}/tb_logs/{dt}_benchmark_frozenlake_trial{trial}",
         )
         epsilon_fn = partial(
             annealed_epsilon,
