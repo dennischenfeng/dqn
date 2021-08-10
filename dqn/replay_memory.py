@@ -46,11 +46,15 @@ class ReplayMemory:
         self.d[i] = done
         self.num_stores += 1
 
-    def sample(self, batch_size) -> Tuple[np.ndarray, int, float, np.ndarray, bool]:
+    def sample(
+        self, batch_size
+    ) -> Tuple[np.ndarray[np.ndarray], np.ndarray[int], np.ndarray[float], np.ndarray[np.ndarray], np.ndarray[bool]]:
         """
         Sample a random minibatch of transitions (sampling with replacement)
 
         :param batch_size: number of items in minibatch
+        :return: tuple of (obs, action, reward, next_obs, done), each of which is a numpy array (number of elements
+        corresponds to batch size)
         """
         active_storage_size = min(self.num_stores, self.n)
         if batch_size > active_storage_size:

@@ -1,7 +1,10 @@
+"""
+Test preprocessed_atari_env module
+"""
+
 import gym
 import pytest
 import numpy as np
-from torchvision import transforms
 import mock
 from dqn.preprocessed_atari_env import preprocess_obs_maxed_seq, create_preprocessing_transform, ATARI_OBS_SHAPE, \
     OBS_SEQUENCE_LENGTH, PreprocessedAtariEnv
@@ -9,8 +12,8 @@ from dqn.preprocessed_atari_env import preprocess_obs_maxed_seq, create_preproce
 
 @pytest.fixture(scope="function")
 def obs_maxed_seq():
-    obs_maxed_seq = [np.ones(ATARI_OBS_SHAPE)] * OBS_SEQUENCE_LENGTH
-    return np.array(obs_maxed_seq)
+    obs_maxed_seq_ = [np.ones(ATARI_OBS_SHAPE)] * OBS_SEQUENCE_LENGTH
+    return np.array(obs_maxed_seq_)
 
 
 @pytest.fixture(scope="function")
@@ -98,16 +101,16 @@ def test_step_no_clip_reward(mock_preprocess, mock_pong_env):
     env = PreprocessedAtariEnv(mock_pong_env, clip_reward=False)
     env.reset()
 
-    mod_obs, rew, done, info = env.step(0)
+    _, rew, _, _ = env.step(0)
     assert mock_pong_env.step.call_count == 4
     assert rew == pytest.approx(0.11 + 0.22 + 0.33 + 0.44)
 
-    mod_obs, rew, done, info = env.step(0)
+    _, rew, _, _ = env.step(0)
     assert mock_pong_env.step.call_count == 8
     assert rew == pytest.approx(0.55 + 0.66 + 0.77 + 0.88)
 
     # Env reaches terminal state before all action_repeat steps
-    mod_obs, rew, done, info = env.step(0)
+    _, rew, _, _ = env.step(0)
     assert mock_pong_env.step.call_count == 10
     # reward is not clipped
     assert rew == pytest.approx(0.99 + 1.1)

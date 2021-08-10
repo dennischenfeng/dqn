@@ -1,7 +1,10 @@
+"""
+Test utils module
+"""
+
 import pytest
 import gym
 import torch as th
-import torch.nn as nn
 from dqn.utils import SimpleCrop, annealed_epsilon, evaluate_model, basic_mlp_network
 from dqn.dqn import DQN
 

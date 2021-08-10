@@ -1,3 +1,7 @@
+"""
+Test replay_memory module
+"""
+
 import pytest
 import numpy as np
 import gym
@@ -81,4 +85,3 @@ def test_initialize_replay_memory():
     n_steps = 70
     initialize_replay_memory(n_steps, env, m)
     assert m.num_stores == n_steps
-

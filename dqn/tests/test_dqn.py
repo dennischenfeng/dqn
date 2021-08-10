@@ -1,14 +1,14 @@
-import pytest
+"""
+Test dqn module
+"""
+
 import numpy as np
 import torch as th
-import torch.nn as nn
 import gym
-import mock
 from functools import partial
 from dqn.dqn import DQN, NatureQNetwork
-from dqn.preprocessed_atari_env import PreprocessedAtariEnv, OBS_SEQUENCE_LENGTH, MOD_OBS_SHAPE, \
-    ReorderedObsAtariEnv
-from dqn.utils import evaluate_model, annealed_epsilon, basic_mlp_network
+from dqn.preprocessed_atari_env import PreprocessedAtariEnv, ReorderedObsAtariEnv
+from dqn.utils import annealed_epsilon, basic_mlp_network
 from dqn.callbacks import SaveQNetworkCallback
 import os
 
@@ -23,13 +23,8 @@ def test_nature_q_network():
 
                 for minibatch_size in [16, 32, 64]:
                     q = NatureQNetwork(obs_space, action_space)
-                    mod_obs_batch = th.ones((minibatch_size, *obs_space.shape)).float()
-                    assert q(mod_obs_batch).shape == (minibatch_size, n_actions)
-
-
-def mock_preprocess_obs_maxed_seq(self):
-    result = th.tensor(self.latest_obs_maxed_seq)
-    return result
+                    obs_batch = th.ones((minibatch_size, *obs_space.shape)).float()
+                    assert q(obs_batch).shape == (minibatch_size, n_actions)
 
 
 def test_dqn():
@@ -60,7 +55,6 @@ def test_dqn_annealed_epsilon():
 def test_dqn_orig_pong_env():
     raw_env = gym.make("PongNoFrameskip-v4")
     env = ReorderedObsAtariEnv(raw_env)
-
     model = DQN(env, replay_memory_size=100)
 
     model.learn(
@@ -83,15 +77,13 @@ def test_dqn_cartpole_env():
     )
 
 
-def test_dqn_cartpole_env_tb(tmpdir):
-    tmpdir = str(tmpdir)
-
+def test_dqn_cartpole_env_with_tensorboard(tmpdir):
     env = gym.make("CartPole-v1")
     n_inputs = env.observation_space.shape[0]
     n_actions = env.action_space.n
     q_network = basic_mlp_network(n_inputs, n_actions)
 
-    model = DQN(env, q_network=q_network, replay_memory_size=100, tb_log_dir=tmpdir)
+    model = DQN(env, q_network=q_network, replay_memory_size=100, tb_log_dir=str(tmpdir))
 
     model.learn(
         34, epsilon=0.1, gamma=0.99, batch_size=32, update_freq=4, target_update_freq=10, lr=1e-3,
@@ -99,15 +91,15 @@ def test_dqn_cartpole_env_tb(tmpdir):
     )
 
 
-def test_dqn_cartpole_env_callback(tmpdir):
+def test_dqn_cartpole_env_with_callback(tmpdir):
     env = gym.make("CartPole-v1")
     n_inputs = env.observation_space.shape[0]
     n_actions = env.action_space.n
     q_network = basic_mlp_network(n_inputs, n_actions)
 
-    model = DQN(env, q_network=q_network, replay_memory_size=100, tb_log_dir=tmpdir)
-
     save_dir = str(tmpdir)
+    model = DQN(env, q_network=q_network, replay_memory_size=100, tb_log_dir=save_dir)
+
     save_prefix = "model_q"
     callback = SaveQNetworkCallback(save_freq=10, save_dir=save_dir, save_prefix="model_q")
 
@@ -120,8 +112,3 @@ def test_dqn_cartpole_env_callback(tmpdir):
     assert os.path.isfile(f"{save_dir}/{save_prefix}_step10")
     assert os.path.isfile(f"{save_dir}/{save_prefix}_step20")
     assert os.path.isfile(f"{save_dir}/{save_prefix}_step30")
-
-
-# TODO: test dqn with optimizer kwargs
-
-# TODO: test construct_epsilon_fn
