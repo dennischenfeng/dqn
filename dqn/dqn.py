@@ -2,21 +2,22 @@
 Deep Q-Network reinforcement learning algorithm.
 """
 
+from copy import deepcopy
+from functools import partial
+from typing import Any, Callable, Dict, Optional, Union
+
 import gym
 import numpy as np
-from copy import deepcopy
 import torch as th
 from torch import nn
+from torch.nn import functional as F
 from torch.utils.tensorboard import SummaryWriter
-from dqn.replay_memory import ReplayMemory, initialize_replay_memory
-from dqn.utils import evaluate_model, annealed_epsilon
+
+from dqn.base_model import BaseModel
 from dqn.callbacks import BaseCallback
 from dqn.preprocessed_atari_env import NO_OP_ACTION
-from typing import Optional, Union, Callable, Any, Dict
-from torch.nn import functional as F
-from functools import partial
-from dqn.base_model import BaseModel
-
+from dqn.replay_memory import ReplayMemory, initialize_replay_memory
+from dqn.utils import annealed_epsilon, evaluate_model
 
 NATURE_Q_NETWORK_ALLOWED_CHANNELS = (1, 3, 4)
 
@@ -50,7 +51,7 @@ class DQN(BaseModel):
 
         # device
         if device is None:
-            self.device = th.device('cuda' if th.cuda.is_available() else 'cpu')
+            self.device = th.device("cuda" if th.cuda.is_available() else "cpu")
         else:
             self.device = device
 
@@ -150,9 +151,9 @@ class DQN(BaseModel):
             # Use minibatch sampled from replay memory to take grad descent step (after completed initial steps)
             if step % update_freq == 0:
                 obsb_, ab_, rb_, obs2b_, db_ = self.replay_memory.sample(batch_size)  # `b` means "batch"
-                obsb, rb, obs2b, db = list(map(lambda x: th.tensor(x).float().to(self.device), [
-                    obsb_, rb_, obs2b_, db_
-                ]))
+                obsb, rb, obs2b, db = list(
+                    map(lambda x: th.tensor(x).float().to(self.device), [obsb_, rb_, obs2b_, db_])
+                )
                 ab = th.tensor(ab_).long().to(self.device)
 
                 # Avoid gradient calculations through q_target
@@ -212,20 +213,20 @@ def construct_epsilon_fn(epsilon: Optional[Union[int, float, Callable[[int], flo
     """
     epsilon_fn: Callable
     if epsilon is None:
-        epsilon_fn = partial(
-            annealed_epsilon, epsilon_start=1.0, epsilon_stop=0.1,
-            anneal_finished_step=50000
-        )
+        epsilon_fn = partial(annealed_epsilon, epsilon_start=1.0, epsilon_stop=0.1, anneal_finished_step=50000)
     elif isinstance(epsilon, (float, int)):
+
         def epsilon_fn(_):
             return float(epsilon)
+
     else:
         if callable(epsilon):
             epsilon_fn = epsilon
         else:
             raise ValueError(
                 "`epsilon` must be either a float/int or a callable that returns a float/int when given the "
-                "step_index.")
+                "step_index."
+            )
 
     return epsilon_fn
 
