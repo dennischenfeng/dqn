@@ -136,7 +136,7 @@ class EnvWithObsAsArray(gym.Env):
         obs_arr = np.array([obs])
         return obs_arr
 
-    def render(self, mode="human") -> None:
+    def render(self, mode: str = "human") -> None:
         self.env.render(mode)
 
 

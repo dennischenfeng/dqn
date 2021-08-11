@@ -230,7 +230,7 @@ class ReorderedObsAtariEnv(gym.Env):
         mod_obs2 = obs2.transpose(*self.new_ordering)
         return mod_obs2, rew, done, info
 
-    def render(self, mode="human") -> None:
+    def render(self, mode: str = "human") -> None:
         """
         Render the env visually
 
