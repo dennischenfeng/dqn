@@ -1,6 +1,6 @@
 # dqn
-Implementing Deep Q Networks (DQN) from scratch, using pytorch. I wrote a Medium blog post describing my process,
-learnings, and results [link soon to be added].
+Implementing Deep Q Networks (DQN) from scratch, using pytorch. I wrote a Medium post (Towards Data Science publication) describing my process,
+learnings, and results: https://towardsdatascience.com/learnings-from-reproducing-dqn-for-atari-games-1630d35f01a9.
 
 ## Installation
 1. I use the Poetry package manager. If you don't already have Poetry installed, see their docs for instructions
@@ -13,7 +13,7 @@ ROMs: https://github.com/openai/atari-py#roms
 
 ## Results
 I tested this DQN implementation on some classic benchmarks (CartPole and FrozenLake) and some Atari games as well 
-(Pong, Freeway). Here is a summary of the results (see my Medium blog post for full details).
+(Pong, Freeway). Here is a summary of the results (check out [my Medium post](https://towardsdatascience.com/learnings-from-reproducing-dqn-for-atari-games-1630d35f01a9) for full details).
 
 ### CartPole
 
