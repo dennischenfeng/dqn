@@ -11,4 +11,4 @@ Implementing Deep Q Networks (DQN) from scratch, using pytorch. I wrote a Medium
 I tested this DQN implementation on some classic benchmarks (CartPole and FrozenLake) and some Atari games as well (Pong, Freeway). Here is a summary of the results (see my Medium blog post for full details).
 
 test: ![alt text](img/cartpole_training_1.png)
-test: ![alt text](img/cartpole_gameplay.gif)
+test: ![alt text](img/cartpole_gameplay.gif | height=200 | width=100)
