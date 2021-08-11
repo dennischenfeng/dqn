@@ -17,7 +17,7 @@ I tested this DQN implementation on some classic benchmarks (CartPole and Frozen
 
 ### CartPole
 
-<img src="img/cartpole_training_mean.png" height="250"/> <img src="img/cartpole_training_1.png" height="250"/> <img src="img/cartpole_gameplay.gif" height="250"/>
+<img src="img/cartpole_training_mean.png" height="200"/> <img src="img/cartpole_training_1.png" height="200"/> <img src="img/cartpole_gameplay.gif" height="200"/>
 
 (Left) Mean of 10 training runs on CartPole. Error ribbons, indicating 1 standard error, are in red. (Middle) A 
 representative training run, where x-axis is number of env steps, y-axis is mean episode return over 100 evaluation
@@ -26,7 +26,7 @@ toppling. (Image and gif source: author)
 
 ### FrozenLake
 
-<img src="img/frozenlake_training_mean.png" height="250"/> <img src="img/frozenlake_training_1.png" height="250"/> <img src="img/frozenlake_gameplay.gif" height="250"/>
+<img src="img/frozenlake_training_mean.png" height="200"/> <img src="img/frozenlake_training_1.png" height="200"/> <img src="img/frozenlake_gameplay.gif" height="200"/>
 
 (Left) Mean of 10 training runs on FrozenLake. Error ribbons, indicating 1 standard error, are in red. (Middle) A 
 representative training run, where x-axis is number of env steps, y-axis is mean episode return over 100 evaluation 
@@ -37,8 +37,8 @@ direction for every step is indicated at the top of the screen. (Image and gif s
 
 ## Pong
 
-<img src="img/pong_training_1.png" height="250"/> <img src="img/pong_training_2.png" height="250"/> <img src="img/pong_training_3.png" height="250"/>
-<img src="img/pong_gameplay.gif" height="250"/>
+<img src="img/pong_training_1.png" height="150"/> <img src="img/pong_training_2.png" height="150"/> <img src="img/pong_training_3.png" height="150"/>
+<img src="img/pong_gameplay.gif" height="200"/>
 
 (Top) Three training runs on Pong, where x-axis is number of env steps and y-axis is episode return of a single 
 evaluation episode. (Bottom) Gameplay of fully trained agent (green player), whose goal is to hit the ball past 
@@ -48,8 +48,8 @@ in a very similar way each time. (Image and gif source: author)
 
 ## Freeway
 
-<img src="img/freeway_training_1.png" height="250"/> <img src="img/freeway_training_2.png" height="250"/> <img src="img/freeway_training_3.png" height="250"/>
-<img src="img/freeway_gameplay.gif" height="250"/>
+<img src="img/freeway_training_1.png" height="150"/> <img src="img/freeway_training_2.png" height="150"/> <img src="img/freeway_training_3.png" height="150"/>
+<img src="img/freeway_gameplay.gif" height="200"/>
 
 (Top) Three training runs on Freeway, where x-axis is number of env steps and y-axis is episode return of a single 
 evaluation episode. (Bottom) Gameplay of fully trained agent (left-side player), whose goal is to direct the chicken 
