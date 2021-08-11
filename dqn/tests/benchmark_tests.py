@@ -25,7 +25,7 @@ def benchmark_against_cartpole() -> None:
     n_actions = env.action_space.n
 
     learn_steps = int(3e6)
-    for trial in range(10):
+    for trial in range(3):
         q_network = nn.Sequential(
             nn.Linear(n_inputs, 64), nn.ReLU(), nn.Linear(64, 64), nn.ReLU(), nn.Linear(64, n_actions)
         )
@@ -74,7 +74,7 @@ def benchmark_against_frozenlake() -> None:
     n_actions = env.action_space.n
 
     learn_steps = int(3e6)
-    for trial in range(10):
+    for trial in range(3):
         q_network = nn.Sequential(
             nn.Linear(n_inputs, 64), nn.ReLU(), nn.Linear(64, 64), nn.ReLU(), nn.Linear(64, n_actions)
         )
