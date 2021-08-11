@@ -12,13 +12,21 @@ ROMs: https://github.com/openai/atari-py#roms
 4. Test by running unit tests! Run `pytest` in the root directory.
 
 ## Results
-I tested this DQN implementation on some classic benchmarks (CartPole and FrozenLake) and some Atari games as well (Pong, Freeway). Here is a summary of the results (see my Medium blog post for full details).
+I tested this DQN implementation on some classic benchmarks (CartPole and FrozenLake) and some Atari games as well 
+(Pong, Freeway). Here is a summary of the results (see my Medium blog post for full details).
 
-<img src="img/cartpole_training_mean.png" width="200"/> <img src="img/cartpole_training_1.png" width="200"/> <img src="img/cartpole_gameplay.gif" width="200"/>
-(Left) Mean of 10 training runs on CartPole. Error ribbons, indicating 1 standard error, are in red. (Middle) A representative training run, where x-axis is number of env steps, y-axis is mean episode return over 100 evaluation
+<img src="img/cartpole_training_mean.png" height="300"/> <img src="img/cartpole_training_1.png" width="300"/> <img src="img/cartpole_gameplay.gif" width="300"/>
+
+(Left) Mean of 10 training runs on CartPole. Error ribbons, indicating 1 standard error, are in red. (Middle) A 
+representative training run, where x-axis is number of env steps, y-axis is mean episode return over 100 evaluation
 episodes. (Right) Gameplay of a fully trained agent, whose goal is to move the cart so the pole stays balanced without
 toppling. (Image and gif source: author)
 
-test2: ![alt text](img/cartpole_gameplay.gif | height=200 | width=100)
+<img src="img/freeway_training_mean.png" height="300"/> <img src="img/freeway_training_1.png" width="300"/> <img src="img/freeway_gameplay.gif" width="300"/>
 
-test3: <img src="img/cartpole_gameplay.gif" width="200"/>
+(Left) Mean of 10 training runs on FrozenLake. Error ribbons, indicating 1 standard error, are in red. (Middle) A 
+representative training run, where x-axis is number of env steps, y-axis is mean episode return over 100 evaluation 
+episodes. (Right) Gameplay of a fully trained agent, whose goal is to navigate from the start position S to the goal 
+position G by walking through frozen spaces F without falling into hole spaces H. The catch is that the floor is 
+slippery and the actual step direction can be randomly rotated 90° from the intended direction. The agent’s input 
+direction for every step is indicated at the top of the screen. (Image and gif source: author)
