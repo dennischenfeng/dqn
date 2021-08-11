@@ -35,7 +35,7 @@ position G by walking through frozen spaces F without falling into hole spaces H
 slippery and the actual step direction can be randomly rotated 90° from the intended direction. The agent’s input 
 direction for every step is indicated at the top of the screen. (Image and gif source: author)
 
-## Pong
+### Pong
 
 <img src="img/pong_training_1.png" height="150"/> <img src="img/pong_training_2.png" height="150"/> <img src="img/pong_training_3.png" height="150"/>
 
@@ -47,7 +47,7 @@ the opponent’s paddle. Here, I added a small amount of stochasticity (10% chan
 the agent deals with a more varied range of scenarios. Without the added stochasticity, the agent beats the opponent 
 in a very similar way each time. (Image and gif source: author)
 
-## Freeway
+### Freeway
 
 <img src="img/freeway_training_1.png" height="150"/> <img src="img/freeway_training_2.png" height="150"/> <img src="img/freeway_training_3.png" height="150"/>
 
